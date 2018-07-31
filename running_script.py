@@ -1,4 +1,4 @@
-#!/g/kreshuk/lukoianov/miniconda3/envs/centenv/bin/python
+#!/g/kreshuk/lukoianov/miniconda3/envs/centenv/bin/python3
 
 import numpy as np
 import os
