@@ -22,4 +22,4 @@
 module load cuDNN
 
 # finally, your script goes here
-bash running_script.py
+./running_script.py

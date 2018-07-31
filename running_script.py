@@ -1,4 +1,4 @@
-#! /g/kreshuk/lukoianov/miniconda3/envs/centenv/bin/python
+#!/g/kreshuk/lukoianov/miniconda3/envs/centenv/bin/python
 
 import numpy as np
 import os
@@ -14,7 +14,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
-
 
 class CentriollesDatasetOn(Dataset):
     """Centriolles dataset."""
