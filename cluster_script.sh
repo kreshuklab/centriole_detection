@@ -21,4 +21,4 @@
 module load cuDNN
 
 # finally, your script goes here
-python centriolles_classification.py
+python running_script.py
