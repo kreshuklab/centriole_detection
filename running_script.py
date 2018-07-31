@@ -159,7 +159,7 @@ if __name__ == "__main__":
     print('Will be used : ', device)
     net.to(device)
 
-    for epoch in range(1):  # loop over the dataset multiple times
+    for epoch in range(100):  # loop over the dataset multiple times
         running_loss = 0.0
         test_loss = 0.0
         for i, data in enumerate(train_dl, 0):
