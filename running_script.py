@@ -3,7 +3,9 @@
 import numpy as np
 import os
 from PIL import Image
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('agg')
+from matplotlib import pyplot as plt
 
 import torch
 import torchvision
@@ -83,13 +85,13 @@ class Net(nn.Module):
         super(Net, self).__init__()
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
-        self.conv1 = nn.Conv2d(1, 400, 3)
-        self.conv2 = nn.Conv2d(400, 350, 3)
-        self.conv3 = nn.Conv2d(350, 300, 3)
-        self.conv4 = nn.Conv2d(300, 200, 3)
-        self.conv5 = nn.Conv2d(200, 100, 3)
-        self.conv6 = nn.Conv2d(100, 50, 3)
-        self.conv7 = nn.Conv2d(50, 20, 3)
+        self.conv1 = nn.Conv2d(1, 200, 3)
+        self.conv2 = nn.Conv2d(200, 150, 3)
+        self.conv3 = nn.Conv2d(150, 100, 3)
+        self.conv4 = nn.Conv2d(100, 80, 3)
+        self.conv5 = nn.Conv2d(80, 60, 3)
+        self.conv6 = nn.Conv2d(60, 40, 3)
+        self.conv7 = nn.Conv2d(40, 20, 3)
         # an affine operation: y = Wx + b
         self.fc1 = nn.Linear(20 * 2 * 2, 20)
         self.fc2 = nn.Linear(20, 8)
@@ -162,7 +164,7 @@ if __name__ == "__main__":
     print('Will be used : ', device)
     net.to(device)
 
-    for epoch in range(10):  # loop over the dataset multiple times
+    for epoch in range(30):  # loop over the dataset multiple time
         running_loss = 0.0
         test_loss = 0.0
         for i, data in enumerate(train_dl, 0):
@@ -205,9 +207,9 @@ if __name__ == "__main__":
     total = 0
     with torch.no_grad():
         for data in test_dl:
-            images, labels = data
+            inputs, labels = data
             inputs, labels = inputs.to(device), labels.to(device)
-            outputs = net(images)
+            outputs = net(inputs)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
@@ -215,7 +217,6 @@ if __name__ == "__main__":
     print('Test     : %.2f %%' % (100 * correct / total))
     print("Const ans: %.2f %%" % (100 * test_ds.class_balance()) )
 
-    plt.figure(figsize=(16, 6))
     plt.plot(train_loss_ar, label="train")
     plt.plot(test_loss_ar, label="test")
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
