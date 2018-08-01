@@ -19,7 +19,7 @@ class CentriollesDatasetOn(Dataset):
 
     def __init__(self, pos_dir='dataset/cropped_pos/',
                        neg_dir='dataset/cropped_neg/', 
-                all_data=False, train=True, fold=0, out_of=1, transform=None):
+                all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=600):
         """
         Args:
             pos_sample_dir (string): Path to the directory with all positive samples
@@ -50,6 +50,7 @@ class CentriollesDatasetOn(Dataset):
         for img_name in get_img_names(pos_dir):
             im = Image.open(os.path.join(pos_dir, img_name))
             im.load()
+            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
             self.samples.append(im.copy())
             self.classes.append(1)
             im.close
@@ -58,6 +59,7 @@ class CentriollesDatasetOn(Dataset):
         for img_name in get_img_names(neg_dir):
             im = Image.open(os.path.join(neg_dir, img_name))
             im.load()
+            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
             self.samples.append(im.copy())
             self.classes.append(0)
             im.close()
@@ -81,16 +83,17 @@ class Net(nn.Module):
         super(Net, self).__init__()
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
-        self.conv1 = nn.Conv2d(1, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.conv3 = nn.Conv2d(16, 22, 5)
-        self.conv4 = nn.Conv2d(22, 30, 5)
-        self.conv5 = nn.Conv2d(30, 32, 5)
-        self.conv6 = nn.Conv2d(32, 30, 5)
+        self.conv1 = nn.Conv2d(1, 400, 3)
+        self.conv2 = nn.Conv2d(400, 350, 3)
+        self.conv3 = nn.Conv2d(350, 300, 3)
+        self.conv4 = nn.Conv2d(300, 200, 3)
+        self.conv5 = nn.Conv2d(200, 100, 3)
+        self.conv6 = nn.Conv2d(100, 50, 3)
+        self.conv7 = nn.Conv2d(50, 20, 3)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(28 * 28 * 30, 220)
-        self.fc2 = nn.Linear(220, 84)
-        self.fc3 = nn.Linear(84, 2)
+        self.fc1 = nn.Linear(20 * 2 * 2, 20)
+        self.fc2 = nn.Linear(20, 8)
+        self.fc3 = nn.Linear(8, 2)
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
@@ -100,7 +103,7 @@ class Net(nn.Module):
         x = F.max_pool2d(F.relu(self.conv4(x)), 2)
         x = F.max_pool2d(F.relu(self.conv5(x)), 2)
         x = F.max_pool2d(F.relu(self.conv6(x)), 2)
-        
+        x = F.max_pool2d(F.relu(self.conv7(x)), 2)
         x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -155,17 +158,17 @@ if __name__ == "__main__":
 
     print('INFO: Learning had been started')
 
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # print('Will be used : ', device)
-    # net.to(device)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print('Will be used : ', device)
+    net.to(device)
 
-    for epoch in range(100):  # loop over the dataset multiple times
+    for epoch in range(10):  # loop over the dataset multiple times
         running_loss = 0.0
         test_loss = 0.0
         for i, data in enumerate(train_dl, 0):
             # get the inputs
             inputs, labels = data
-            # inputs, labels = inputs.to(device), labels.to(device)
+            inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
             #show_from_batch(torchvision.utils.make_grid(inputs))
@@ -203,6 +206,7 @@ if __name__ == "__main__":
     with torch.no_grad():
         for data in test_dl:
             images, labels = data
+            inputs, labels = inputs.to(device), labels.to(device)
             outputs = net(images)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
