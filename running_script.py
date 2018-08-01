@@ -2,7 +2,6 @@
 
 import numpy as np
 import os
-from scipy import ndimage
 from PIL import Image
 import matplotlib.pyplot as plt
 
@@ -147,7 +146,7 @@ if __name__ == "__main__":
 
     net = Net()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 
     train_loss_ar = []
@@ -156,9 +155,9 @@ if __name__ == "__main__":
 
     print('INFO: Learning had been started')
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print('Will be used : ', device)
-    net.to(device)
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # print('Will be used : ', device)
+    # net.to(device)
 
     for epoch in range(100):  # loop over the dataset multiple times
         running_loss = 0.0
@@ -166,7 +165,7 @@ if __name__ == "__main__":
         for i, data in enumerate(train_dl, 0):
             # get the inputs
             inputs, labels = data
-            inputs, labels = inputs.to(device), labels.to(device)
+            # inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
             #show_from_batch(torchvision.utils.make_grid(inputs))
