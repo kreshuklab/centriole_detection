@@ -16,12 +16,14 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 
+from densnet_impl import DenseNet
+
 class CentriollesDatasetOn(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, pos_dir='dataset/cropped_pos/',
-                       neg_dir='dataset/cropped_neg/', 
-                all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=600):
+    def __init__(self, pos_dir='dataset/1_cifar_class/',
+                       neg_dir='dataset/0_cifar_class/', 
+                all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512):
         """
         Args:
             pos_sample_dir (string): Path to the directory with all positive samples
@@ -149,9 +151,12 @@ if __name__ == "__main__":
     test_dl  = DataLoader(test_ds,  batch_size=4, shuffle=True, num_workers=3)
 
 
-    net = Net()
+    net = DenseNet(growthRate=12, depth=20, reduction=0.5, bottleneck=True, nClasses=2)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+
+    print('  + Number of params: {}'.format(
+        sum([p.data.nelement() for p in net.parameters()])))
 
 
     train_loss_ar = []
