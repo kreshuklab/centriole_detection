@@ -21,8 +21,8 @@ from densnet_impl import DenseNet
 class CentriollesDatasetOn(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, pos_dir='dataset/1_cifar_class/',
-                       neg_dir='dataset/0_cifar_class/', 
+    def __init__(self, pos_dir='dataset/cropped_pos/',
+                       neg_dir='dataset/cropped_neg/', 
                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512):
         """
         Args:
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     print('Will be used : ', device)
     net.to(device)
 
-    for epoch in range(30):  # loop over the dataset multiple time
+    for epoch in range(300):  # loop over the dataset multiple time
         running_loss = 0.0
         test_loss = 0.0
         for i, data in enumerate(train_dl, 0):
