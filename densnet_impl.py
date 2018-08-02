@@ -82,9 +82,28 @@ class DenseNet(nn.Module):
         nChannels = nOutChannels
         self.dense3 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
         nChannels += nDenseBlocks*growthRate
+        nOutChannels = int(math.floor(nChannels*reduction))
+        self.trans3 = Transition(nChannels, nOutChannels)
+
+        nChannels = nOutChannels
+        self.dense4 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        nChannels += nDenseBlocks*growthRate
+        nOutChannels = int(math.floor(nChannels*reduction))
+        self.trans4 = Transition(nChannels, nOutChannels)
+
+        nChannels = nOutChannels
+        self.dense5 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        nChannels += nDenseBlocks*growthRate
+        nOutChannels = int(math.floor(nChannels*reduction))
+        self.trans5 = Transition(nChannels, nOutChannels)
+
+        nChannels = nOutChannels
+        self.dense6 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        nChannels += nDenseBlocks*growthRate
 
         self.bn1 = nn.BatchNorm2d(nChannels)
-        self.fc = nn.Linear(12288, nClasses)
+        self.fc1 = nn.Linear(48 * 2 * 2, 48)
+        self.fc2 = nn.Linear(48, nClasses)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -110,12 +129,16 @@ class DenseNet(nn.Module):
         out = self.conv1(x)
         out = self.trans1(self.dense1(out))
         out = self.trans2(self.dense2(out))
-        out = self.dense3(out)
+        out = self.trans3(self.dense3(out))
+        out = self.trans4(self.dense4(out))
+        out = self.trans5(self.dense5(out))
+        out = self.dense6(out)
         out = F.avg_pool2d(F.relu(self.bn1(out)), 8)
         out = out.view(-1, self.num_flat_features(out))
-        out = self.fc(out)
+        out = F.relu(self.fc1(out))
+        out = F.relu(self.fc2(out))
         return out
-        
+
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
         num_features = 1
