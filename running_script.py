@@ -152,22 +152,22 @@ if __name__ == "__main__":
 
 
     net = DenseNet(growthRate=15, depth=20, reduction=0.5, bottleneck=True, nClasses=2)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
 
     print('  + Number of params: {}'.format(
         sum([p.data.nelement() for p in net.parameters()])))
 
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print('Will be used : ', device)
+    net.to(device)
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
     train_loss_ar = []
     test_loss_ar = []
     best_test_loss = 10e8
 
     print('INFO: Learning had been started')
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print('Will be used : ', device)
-    net.to(device)
 
     for epoch in range(300):  # loop over the dataset multiple time
         running_loss = 0.0
