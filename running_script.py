@@ -151,7 +151,7 @@ if __name__ == "__main__":
     test_dl  = DataLoader(test_ds,  batch_size=4, shuffle=True, num_workers=3)
 
 
-    net = DenseNet(growthRate=20, depth=30, reduction=0.5, bottleneck=True, nClasses=2)
+    net = DenseNet(growthRate=15, depth=20, reduction=0.5, bottleneck=True, nClasses=2)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.002, momentum=0.9)
 
