@@ -153,7 +153,7 @@ if __name__ == "__main__":
 
     net = DenseNet(growthRate=15, depth=20, reduction=0.5, bottleneck=True, nClasses=2)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.002, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
 
     print('  + Number of params: {}'.format(
         sum([p.data.nelement() for p in net.parameters()])))
