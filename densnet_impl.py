@@ -103,7 +103,9 @@ class DenseNet(nn.Module):
 
         self.bn1 = nn.BatchNorm2d(nChannels)
         self.fc1 = nn.Linear(48 * 2 * 2, 48)
-        self.fc2 = nn.Linear(48, nClasses)
+		self.fc2 = nn.Linear(48, 20)
+		self.fc3 = nn.Linear(20, 8)
+        self.fc4 = nn.Linear(8, nClasses)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -137,6 +139,8 @@ class DenseNet(nn.Module):
         out = out.view(-1, self.num_flat_features(out))
         out = F.relu(self.fc1(out))
         out = F.relu(self.fc2(out))
+		out = F.relu(self.fc3(out))
+		out = self.fc4(out)
         return out
 
     def num_flat_features(self, x):
