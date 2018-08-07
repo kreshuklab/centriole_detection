@@ -7,10 +7,10 @@
 #SBATCH -A kreshuk                             	 # specify the group
 #SBATCH -N 1				  				     # specify the number of cluster nodes for the job
 #SBATCH -n 3				   				     # specify the number of cores per node for the job
-#SBATCH --mem 20G			    			   	 # specify the amount of memory per node
+#SBATCH --mem 30G			    			   	 # specify the amount of memory per node
 #SBATCH -t 02:00:00                              # specify the runtime of the job IMPORTANT: your job will get killed if it exceeds this runtime (the format is d-h:mm-ss)
-#SBATCH -o outfile.out			    			 # specify the file to write the command line output to
-#SBATCH -e errfile.err			      			 # specify the file to write the error output to
+#SBATCH -o outfile.log			    			 # specify the file to write the command line output to
+#SBATCH -e errfile.log			      			 # specify the file to write the error output to
 #SBATCH --mail-type=END		     	             # specify mail notifications for your job 
 #SBATCH --mail-user=artem.lukoianov@embl.de  	 # specify the mail address for mail notifications 
 #SBATCH -p gpu				      				 # specify the queue you want to submit to; here we choose the gpu queue. If you want to submit a pure CPU job, just leave this out.

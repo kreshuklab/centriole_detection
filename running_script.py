@@ -16,7 +16,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 
-from densnet_impl import DenseNet
+from densnet_impl import DenseNet, DenseNetSC, OrdCNN
 
 class CentriollesDatasetOn(Dataset):
     """Centriolles dataset."""
@@ -80,58 +80,14 @@ class CentriollesDatasetOn(Dataset):
         return np.sum(self.classes) / len(self.classes)
 
 
-
-class Net(nn.Module):
-
-    def __init__(self):
-        super(Net, self).__init__()
-        # 1 input image channel, 6 output channels, 5x5 square convolution
-        # kernel
-        self.conv1 = nn.Conv2d(1, 200, 3)
-        self.conv2 = nn.Conv2d(200, 150, 3)
-        self.conv3 = nn.Conv2d(150, 100, 3)
-        self.conv4 = nn.Conv2d(100, 80, 3)
-        self.conv5 = nn.Conv2d(80, 60, 3)
-        self.conv6 = nn.Conv2d(60, 40, 3)
-        self.conv7 = nn.Conv2d(40, 20, 3)
-        # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(20 * 2 * 2, 20)
-        self.fc2 = nn.Linear(20, 8)
-        self.fc3 = nn.Linear(8, 2)
-
-    def forward(self, x):
-        # Max pooling over a (2, 2) window
-        x = F.max_pool2d(F.relu(self.conv1(x)), 2)
-        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        x = F.max_pool2d(F.relu(self.conv3(x)), 2)
-        x = F.max_pool2d(F.relu(self.conv4(x)), 2)
-        x = F.max_pool2d(F.relu(self.conv5(x)), 2)
-        x = F.max_pool2d(F.relu(self.conv6(x)), 2)
-        x = F.max_pool2d(F.relu(self.conv7(x)), 2)
-        x = x.view(-1, self.num_flat_features(x))
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-    def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
-
-
-
 def detect_mean_std():
-    all_data = CentriollesDatasetOn(all_data=True, transform=transforms.ToTensor()) 
+    all_data = CentriollesDatasetOn(all_data=True, transform=transforms.ToTensor(), inp_size=2048) 
     for elem in DataLoader(all_data, batch_size=len(all_data)):
         inputs, labels = elem
         tmp = torchvision.utils.make_grid(inputs)
         gme = tmp.mean()
         gstd = tmp.std()
     return gme, gstd
-
 
 
 if __name__ == "__main__":
@@ -147,11 +103,11 @@ if __name__ == "__main__":
     train_ds = CentriollesDatasetOn(transform=final_tr) 
     test_ds  = CentriollesDatasetOn(transform=final_tr, train=False)
 
-    train_dl = DataLoader(train_ds, batch_size=4, shuffle=True, num_workers=3)
-    test_dl  = DataLoader(test_ds,  batch_size=4, shuffle=True, num_workers=3)
+    train_dl = DataLoader(train_ds, batch_size=1, shuffle=True, num_workers=3)
+    test_dl  = DataLoader(test_ds,  batch_size=1, shuffle=True, num_workers=3)
 
 
-    net = DenseNet(growthRate=15, depth=20, reduction=0.5, bottleneck=True, nClasses=2)
+    net = DenseNetSC(growthRate=15, depth=50, reduction=0.5, bottleneck=True, nClasses=2)
 
     print('  + Number of params: {}'.format(
         sum([p.data.nelement() for p in net.parameters()])))
@@ -161,7 +117,7 @@ if __name__ == "__main__":
     net.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)
+    optimizer = optim.SGD(net.parameters(), lr=5e-4, momentum=0.9, weight_decay=1e-4)
 
     train_loss_ar = []
     test_loss_ar = []
@@ -169,7 +125,7 @@ if __name__ == "__main__":
 
     print('INFO: Learning had been started')
 
-    for epoch in range(300):  # loop over the dataset multiple time
+    for epoch in range(100):  # loop over the dataset multiple time
         running_loss = 0.0
         test_loss = 0.0
         for i, data in enumerate(train_dl, 0):
@@ -207,6 +163,20 @@ if __name__ == "__main__":
         train_loss_ar.append(running_loss / len(train_dl))
         test_loss_ar.append(test_loss / len(test_dl))
     print('Finished Training')
+
+
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in train_dl:
+            inputs, labels = data
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = net(inputs)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    print('Train     : %.2f %%' % (100 * correct / total))
 
     correct = 0
     total = 0
