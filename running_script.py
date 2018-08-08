@@ -107,7 +107,7 @@ if __name__ == "__main__":
     test_dl  = DataLoader(test_ds,  batch_size=1, shuffle=True, num_workers=3)
 
 
-    net = DenseNetSC(growthRate=15, depth=50, reduction=0.5, bottleneck=True, nClasses=2)
+    net = DenseNet(growthRate=12, depth=30, reduction=0.5, bottleneck=True, nClasses=2)
 
     print('  + Number of params: {}'.format(
         sum([p.data.nelement() for p in net.parameters()])))
@@ -117,15 +117,17 @@ if __name__ == "__main__":
     net.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=5e-4, momentum=0.9, weight_decay=1e-4)
+    # optimizer = optim.SGD(net.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-3)
+    optimizer = optim.Adam(net.parameters(), lr=1e-4, betas=(0.9, 0.999), eps=1e-08, weight_decay=5e-6, amsgrad=False)
 
     train_loss_ar = []
     test_loss_ar = []
     best_test_loss = 10e8
 
+
     print('INFO: Learning had been started')
 
-    for epoch in range(100):  # loop over the dataset multiple time
+    for epoch in range(400):  # loop over the dataset multiple time
         running_loss = 0.0
         test_loss = 0.0
         for i, data in enumerate(train_dl, 0):
@@ -195,7 +197,6 @@ if __name__ == "__main__":
     plt.plot(train_loss_ar, label="train")
     plt.plot(test_loss_ar, label="test")
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.xticks(range(len(train_loss_ar)))
     plt.savefig('learning_plot.png')
 
 

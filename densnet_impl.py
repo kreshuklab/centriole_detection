@@ -169,7 +169,7 @@ class DenseNet(nn.Module):
         nChannels += nDenseBlocks*growthRate
 
         self.bn1 = nn.BatchNorm2d(nChannels)
-        self.fc1 = nn.Linear(828, 138)
+        self.fc1 = nn.Linear(380, 138)
         self.fc2 = nn.Linear(138, 24)
         self.fc3 = nn.Linear(24, nClasses)
 
@@ -235,43 +235,54 @@ class DenseNet(nn.Module):
 
 class DenseNetSC(nn.Module):
     def __init__(self, growthRate, depth, reduction, nClasses, bottleneck):
-        super(DenseNet, self).__init__()
+        super(DenseNetSC, self).__init__()
 
         nDenseBlocks = (depth-4) // 3
         if bottleneck:
             nDenseBlocks //= 2
 
         nChannels = 2*growthRate
+        memChannels = 1
         self.conv1 = nn.Conv2d(1, nChannels, kernel_size=3, padding=1,
                                bias=False)
-        self.dense1 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        self.dense1 = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
+        tmp = nChannels
         nChannels += nDenseBlocks*growthRate
         nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans1 = Transition(nChannels, nOutChannels)
+        self.trans1 = Transition(nChannels+ memChannels, nOutChannels)
+        memChannels += tmp
 
         nChannels = nOutChannels
-        self.dense2 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        self.dense2 = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
+        tmp = nChannels
         nChannels += nDenseBlocks*growthRate
         nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans2 = Transition(nChannels, nOutChannels)
+        self.trans2 = Transition(nChannels + memChannels, nOutChannels)
+        memChannels += tmp
 
         nChannels = nOutChannels
-        self.dense3 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        self.dense3 = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
+        tmp = nChannels
         nChannels += nDenseBlocks*growthRate
         nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans3 = Transition(nChannels, nOutChannels)
+        self.trans3 = Transition(nChannels + memChannels, nOutChannels)
+        memChannels += tmp
 
         nChannels = nOutChannels
-        self.dense4 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        self.dense4 = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
+        tmp = nChannels
         nChannels += nDenseBlocks*growthRate
         nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans4 = Transition(nChannels, nOutChannels)
+        self.trans4 = Transition(nChannels + memChannels, nOutChannels)
+        memChannels += tmp
 
         nChannels = nOutChannels
-        self.dense5 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        self.dense5 = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
+        tmp = nChannels
         nChannels += nDenseBlocks*growthRate
         nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans5 = Transition(nChannels, nOutChannels)
+        self.trans5 = Transition(nChannels + memChannels, nOutChannels)
+        memChannels += tmp
 
         # nChannels = nOutChannels
         # self.dense6 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
@@ -286,13 +297,13 @@ class DenseNetSC(nn.Module):
         # self.trans7 = Transition(nChannels, nOutChannels)
 
         nChannels = nOutChannels
-        self.denseF = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        self.denseF = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
         nChannels += nDenseBlocks*growthRate
 
-        self.bn1 = nn.BatchNorm2d(nChannels)
-        self.fc1 = nn.Linear(828, 138)
-        self.fc2 = nn.Linear(138, 24)
-        self.fc3 = nn.Linear(24, nClasses)
+        self.bn1 = nn.BatchNorm2d(nChannels + memChannels)
+        self.fc1 = nn.Linear(1156, 100)
+        self.fc2 = nn.Linear(100, 40)
+        self.fc3 = nn.Linear(40, nClasses)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -319,23 +330,28 @@ class DenseNetSC(nn.Module):
         x = self.conv1(mem_data)
         mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
         mem_data = torch.cat((x, mem_data), 1)
-        print(x.size())
-        print(mem_data.size())
         x = self.trans1(self.dense1(mem_data))
+        
         mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
         mem_data = torch.cat((x, mem_data), 1)
         x = self.trans2(self.dense2(mem_data))
+        
         mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
         mem_data = torch.cat((x, mem_data), 1)
         x = self.trans3(self.dense3(mem_data))
+        
         mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
         mem_data = torch.cat((x, mem_data), 1)
         x = self.trans4(self.dense4(mem_data))
+        
         mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
         mem_data = torch.cat((x, mem_data), 1)
         x = self.trans5(self.dense5(mem_data))
-
+       
+        mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
+        mem_data = torch.cat((x, mem_data), 1)
         x = self.denseF(mem_data)
+
         x = F.avg_pool2d(F.relu(self.bn1(x)), 8)
         # print(out.size())
         x = x.view(-1, self.num_flat_features(x))
