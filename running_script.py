@@ -21,8 +21,8 @@ from densnet_impl import DenseNet, DenseNetSC, OrdCNN
 class CentriollesDatasetOn(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, pos_dir='dataset/cropped_pos/',
-                       neg_dir='dataset/cropped_neg/', 
+    def __init__(self, pos_dir='dataset/positives',
+                       neg_dir='dataset/negatives', 
                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512):
         """
         Args:
@@ -81,7 +81,7 @@ class CentriollesDatasetOn(Dataset):
 
 
 def detect_mean_std():
-    all_data = CentriollesDatasetOn(all_data=True, transform=transforms.ToTensor(), inp_size=2048) 
+    all_data = CentriollesDatasetOn(all_data=True, transform=transforms.ToTensor(), inp_size=512) 
     for elem in DataLoader(all_data, batch_size=len(all_data)):
         inputs, labels = elem
         tmp = torchvision.utils.make_grid(inputs)
