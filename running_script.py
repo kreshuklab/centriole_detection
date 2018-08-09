@@ -16,68 +16,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 
-from densnet_impl import DenseNet, DenseNetSC, OrdCNN
-
-class CentriollesDatasetOn(Dataset):
-    """Centriolles dataset."""
-
-    def __init__(self, pos_dir='dataset/positives',
-                       neg_dir='dataset/negatives', 
-                all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512):
-        """
-        Args:
-            pos_sample_dir (string): Path to the directory with all positive samples
-            neg_sample_dir (string): Path to the directory with all negative samples
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
-        self.samples = []
-        self.classes = []
-        self.transform = transform
-        
-        def get_img_names(dir_name):
-            img_names = [f for f in os.listdir(dir_name) if f.endswith('.png')]
-            if all_data:
-                return img_names
-            if out_of == 1:
-                delimetr = int(0.6 * len(img_names))
-            else:
-                delimetr = int((fold + 1)/out_of * len(img_names))
-            if train:
-                img_names = img_names[:delimetr]
-            else:
-                img_names = img_names[delimetr:]
-            return img_names
-
-        
-        ## Positive samples
-        for img_name in get_img_names(pos_dir):
-            im = Image.open(os.path.join(pos_dir, img_name))
-            im.load()
-            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
-            self.samples.append(im.copy())
-            self.classes.append(1)
-            im.close
-            
-        ## Negative samples
-        for img_name in get_img_names(neg_dir):
-            im = Image.open(os.path.join(neg_dir, img_name))
-            im.load()
-            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
-            self.samples.append(im.copy())
-            self.classes.append(0)
-            im.close()
-
-    def __len__(self):
-        return len(self.samples)
-
-    def __getitem__(self, idx):
-        if self.transform:
-            return self.transform(self.samples[idx]), self.classes[idx]
-        return self.samples[idx], self.classes[idx]
-    
-    def class_balance(self):
-        return np.sum(self.classes) / len(self.classes)
+from densnet_impl import DenseNet, DenseNetSC, OrdCNN, CentriollesDatasetOn
 
 
 def detect_mean_std():
@@ -88,6 +27,20 @@ def detect_mean_std():
         gme = tmp.mean()
         gstd = tmp.std()
     return gme, gstd
+
+def print_accuracy(net, dataloader, name):
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in dataloader:
+            inputs, labels = data
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs, last_layer = net(inputs)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    print(name + ' : %.2f %%' % (100 * correct / total))
 
 
 if __name__ == "__main__":
@@ -107,7 +60,8 @@ if __name__ == "__main__":
     test_dl  = DataLoader(test_ds,  batch_size=1, shuffle=True, num_workers=3)
 
 
-    net = DenseNet(growthRate=12, depth=30, reduction=0.5, bottleneck=True, nClasses=2)
+    #net = DenseNet(growthRate=12, depth=30, reduction=0.5, bottleneck=True, nClasses=2)
+    net = OrdCNN()
 
     print('  + Number of params: {}'.format(
         sum([p.data.nelement() for p in net.parameters()])))
@@ -139,7 +93,7 @@ if __name__ == "__main__":
             #show_from_batch(torchvision.utils.make_grid(inputs))
             
             # forward + backward + optimize
-            outputs = net(inputs)
+            outputs, last_layer = net(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
@@ -151,7 +105,7 @@ if __name__ == "__main__":
             inputs, labels = data
             inputs, labels = inputs.to(device), labels.to(device)
 
-            outputs = net(inputs)
+            outputs, last_layer = net(inputs)
             loss = criterion(outputs, labels)
             test_loss += loss.item()
 
@@ -164,35 +118,20 @@ if __name__ == "__main__":
 
         train_loss_ar.append(running_loss / len(train_dl))
         test_loss_ar.append(test_loss / len(test_dl))
+
+
     print('Finished Training')
 
 
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for data in train_dl:
-            inputs, labels = data
-            inputs, labels = inputs.to(device), labels.to(device)
-            outputs = net(inputs)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-    print('Train     : %.2f %%' % (100 * correct / total))
-
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for data in test_dl:
-            inputs, labels = data
-            inputs, labels = inputs.to(device), labels.to(device)
-            outputs = net(inputs)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-    print('Test     : %.2f %%' % (100 * correct / total))
     print("Const ans: %.2f %%" % (100 * test_ds.class_balance()) )
+    print()
+    print_accuracy(net, train_dl, 'Last train')
+    print_accuracy(net, test_dl,  'Last test ')
+    net = torch.load('best_weight.pt')
+    print()
+    print_accuracy(net, train_dl, 'Final train')
+    print_accuracy(net, test_dl,  'Final test ')
+
 
     plt.plot(train_loss_ar, label="train")
     plt.plot(test_loss_ar, label="test")

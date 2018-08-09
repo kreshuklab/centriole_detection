@@ -2,24 +2,99 @@ import torch
 
 import torch.nn as nn
 import torch.optim as optim
-
 import torch.nn.functional as F
 from torch.autograd import Variable
 
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
 
 import torchvision.models as models
 
 import sys
 import math
+import os
+from PIL import Image
+
+
+class CentriollesDatasetOn(Dataset):
+    """Centriolles dataset."""
+
+    def __init__(self, pos_dir='dataset/positives',
+                       neg_dir='dataset/negatives', 
+                all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512):
+        """
+        Args:
+            pos_sample_dir (string): Path to the directory with all positive samples
+            neg_sample_dir (string): Path to the directory with all negative samples
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        self.samples = []
+        self.classes = []
+        self.transform = transform
+        
+        def get_img_names(dir_name):
+            img_names = [f for f in os.listdir(dir_name) if f.endswith('.png')]
+            if all_data:
+                return img_names
+            if out_of == 1:
+                delimetr = int(0.6 * len(img_names))
+            else:
+                delimetr = int((fold + 1)/out_of * len(img_names))
+            if train:
+                img_names = img_names[:delimetr]
+            else:
+                img_names = img_names[delimetr:]
+            return img_names
+
+        
+        ## Positive samples
+        for img_name in get_img_names(pos_dir):
+            im = Image.open(os.path.join(pos_dir, img_name))
+            im.load()
+            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
+            self.samples.append(im.copy())
+            self.classes.append(1)
+            im.close
+            
+        ## Negative samples
+        for img_name in get_img_names(neg_dir):
+            im = Image.open(os.path.join(neg_dir, img_name))
+            im.load()
+            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
+            self.samples.append(im.copy())
+            self.classes.append(0)
+            im.close()
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        if self.transform:
+            return self.transform(self.samples[idx]), self.classes[idx]
+        return self.samples[idx], self.classes[idx]
+    
+    def class_balance(self):
+        return np.sum(self.classes) / len(self.classes)
+
+
+
+
+
+
+###############################################################################
+###                             NEW CLASS                                   ###
+###############################################################################
+
+
+
+
 
 
 class OrdCNN(nn.Module):
-
     def __init__(self):
-        super(Net, self).__init__()
+        super(OrdCNN, self).__init__()
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
         self.conv1 = nn.Conv2d(1, 200, 3)
@@ -30,9 +105,9 @@ class OrdCNN(nn.Module):
         self.conv6 = nn.Conv2d(60, 40, 3)
         self.conv7 = nn.Conv2d(40, 20, 3)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(20 * 2 * 2, 20)
-        self.fc2 = nn.Linear(20, 8)
-        self.fc3 = nn.Linear(8, 2)
+        self.fc1 = nn.Linear(320, 4 * 20) 
+        self.fc2 = nn.Linear(4 * 20, 20)
+        self.fc3 = nn.Linear(20, 2)
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
@@ -42,12 +117,12 @@ class OrdCNN(nn.Module):
         x = F.max_pool2d(F.relu(self.conv4(x)), 2)
         x = F.max_pool2d(F.relu(self.conv5(x)), 2)
         x = F.max_pool2d(F.relu(self.conv6(x)), 2)
-        x = F.max_pool2d(F.relu(self.conv7(x)), 2)
-        x = x.view(-1, self.num_flat_features(x))
+        out = F.relu(self.conv7(x))
+        x = out.view(-1, self.num_flat_features(out))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        return x
+        return x, out
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
@@ -152,25 +227,26 @@ class DenseNet(nn.Module):
         nOutChannels = int(math.floor(nChannels*reduction))
         self.trans5 = Transition(nChannels, nOutChannels)
 
-        # nChannels = nOutChannels
-        # self.dense6 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        # nChannels += nDenseBlocks*growthRate
-        # nOutChannels = int(math.floor(nChannels*reduction))
-        # self.trans6 = Transition(nChannels, nOutChannels)
+        nChannels = nOutChannels
+        self.dense6 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        nChannels += nDenseBlocks*growthRate
+        nOutChannels = int(math.floor(nChannels*reduction))
+        self.trans6 = Transition(nChannels, nOutChannels)
 
-        # nChannels = nOutChannels
-        # self.dense7 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        # nChannels += nDenseBlocks*growthRate
-        # nOutChannels = int(math.floor(nChannels*reduction))
-        # self.trans7 = Transition(nChannels, nOutChannels)
+        nChannels = nOutChannels
+        self.dense7 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
+        nChannels += nDenseBlocks*growthRate
+        nOutChannels = int(math.floor(nChannels*reduction))
+        self.trans7 = Transition(nChannels, nOutChannels)
 
         nChannels = nOutChannels
         self.denseF = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
         nChannels += nDenseBlocks*growthRate
 
         self.bn1 = nn.BatchNorm2d(nChannels)
-        self.fc1 = nn.Linear(380, 138)
+        self.fc1 = nn.Linear(1520, 138)
         self.fc2 = nn.Linear(138, 24)
+        
         self.fc3 = nn.Linear(24, nClasses)
 
         for m in self.modules():
@@ -200,16 +276,17 @@ class DenseNet(nn.Module):
         out = self.trans3(self.dense3(out))
         out = self.trans4(self.dense4(out))
         out = self.trans5(self.dense5(out))
-        # out = self.trans6(self.dense6(out))
-        # out = self.trans7(self.dense7(out))
+        out = self.trans6(self.dense6(out))
+        out = self.trans7(self.dense7(out))
         out = self.denseF(out)
-        out = F.avg_pool2d(F.relu(self.bn1(out)), 8)
+        out1 = F.relu(self.bn1(out))
+
         # print(out.size())
-        out = out.view(-1, self.num_flat_features(out))
+        out = out.view(-1, self.num_flat_features(out1))
         out = F.relu(self.fc1(out))
         out = F.relu(self.fc2(out))
         out = self.fc3(out)
-        return out
+        return out, out1
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
