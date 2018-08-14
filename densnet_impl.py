@@ -15,70 +15,7 @@ import sys
 import math
 import os
 from PIL import Image
-
-
-class CentriollesDatasetOn(Dataset):
-    """Centriolles dataset."""
-
-    def __init__(self, pos_dir='dataset/positives',
-                       neg_dir='dataset/negatives', 
-                all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512):
-        """
-        Args:
-            pos_sample_dir (string): Path to the directory with all positive samples
-            neg_sample_dir (string): Path to the directory with all negative samples
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
-        self.samples = []
-        self.classes = []
-        self.transform = transform
-        
-        def get_img_names(dir_name):
-            img_names = [f for f in os.listdir(dir_name) if f.endswith('.png')]
-            if all_data:
-                return img_names
-            if out_of == 1:
-                delimetr = int(0.6 * len(img_names))
-            else:
-                delimetr = int((fold + 1)/out_of * len(img_names))
-            if train:
-                img_names = img_names[:delimetr]
-            else:
-                img_names = img_names[delimetr:]
-            return img_names
-
-        
-        ## Positive samples
-        for img_name in get_img_names(pos_dir):
-            im = Image.open(os.path.join(pos_dir, img_name))
-            im.load()
-            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
-            self.samples.append(im.copy())
-            self.classes.append(1)
-            im.close
-            
-        ## Negative samples
-        for img_name in get_img_names(neg_dir):
-            im = Image.open(os.path.join(neg_dir, img_name))
-            im.load()
-            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
-            self.samples.append(im.copy())
-            self.classes.append(0)
-            im.close()
-
-    def __len__(self):
-        return len(self.samples)
-
-    def __getitem__(self, idx):
-        if self.transform:
-            return self.transform(self.samples[idx]), self.classes[idx]
-        return self.samples[idx], self.classes[idx]
-    
-    def class_balance(self):
-        return np.sum(self.classes) / len(self.classes)
-
-
+import numpy as np
 
 
 
@@ -97,17 +34,17 @@ class OrdCNN(nn.Module):
         super(OrdCNN, self).__init__()
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
-        self.conv1 = nn.Conv2d(1, 200, 3)
-        self.conv2 = nn.Conv2d(200, 150, 3)
-        self.conv3 = nn.Conv2d(150, 100, 3)
-        self.conv4 = nn.Conv2d(100, 80, 3)
-        self.conv5 = nn.Conv2d(80, 60, 3)
-        self.conv6 = nn.Conv2d(60, 40, 3)
-        self.conv7 = nn.Conv2d(40, 20, 3)
+        self.conv1 = nn.Conv2d(1, 64, 3)
+        self.conv2 = nn.Conv2d(64, 128, 3)
+        self.conv3 = nn.Conv2d(128, 64, 3)
+        self.conv4 = nn.Conv2d(64, 32, 3)
+        self.conv5 = nn.Conv2d(32, 16, 3)
+        self.conv6 = nn.Conv2d(16, 8, 3)
+        self.conv7 = nn.Conv2d(8, 4, 3)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(320, 4 * 20) 
-        self.fc2 = nn.Linear(4 * 20, 20)
-        self.fc3 = nn.Linear(20, 2)
+        self.fc1 = nn.Linear(100, 32) 
+        self.fc2 = nn.Linear(32, 8)
+        self.fc3 = nn.Linear(8, 2)
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
@@ -115,8 +52,8 @@ class OrdCNN(nn.Module):
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         x = F.max_pool2d(F.relu(self.conv3(x)), 2)
         x = F.max_pool2d(F.relu(self.conv4(x)), 2)
-        x = F.max_pool2d(F.relu(self.conv5(x)), 2)
-        x = F.max_pool2d(F.relu(self.conv6(x)), 2)
+        x = F.max_pool2d(F.relu(self.conv5(x)), 4)
+        x = F.max_pool2d(F.relu(self.conv6(x)), 4)
         out = F.relu(self.conv7(x))
         x = out.view(-1, self.num_flat_features(out))
         x = F.relu(self.fc1(x))
