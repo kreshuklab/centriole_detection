@@ -20,6 +20,7 @@ import numpy as np
 
 
 
+
 ###############################################################################
 ###                             NEW CLASS                                   ###
 ###############################################################################
@@ -82,6 +83,8 @@ class OrdCNN(nn.Module):
 
 
 
+
+
 class Bottleneck(nn.Module):
     def __init__(self, nChannels, growthRate):
         super(Bottleneck, self).__init__()
@@ -110,6 +113,7 @@ class SingleLayer(nn.Module):
         out = self.conv1(F.relu(self.bn1(x)))
         out = torch.cat((x, out), 1)
         return out
+
 
 class Transition(nn.Module):
     def __init__(self, nChannels, nOutChannels):
@@ -181,10 +185,10 @@ class DenseNet(nn.Module):
         nChannels += nDenseBlocks*growthRate
 
         self.bn1 = nn.BatchNorm2d(nChannels)
-        self.fc1 = nn.Linear(1520, 138)
-        self.fc2 = nn.Linear(138, 24)
+        self.fc1 = nn.Linear(1104, 8)
+        self.fc2 = nn.Linear(8, nClasses)
         
-        self.fc3 = nn.Linear(24, nClasses)
+        # self.fc3 = nn.Linear(4, nClasses)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -221,8 +225,8 @@ class DenseNet(nn.Module):
         # print(out.size())
         out = out.view(-1, self.num_flat_features(out1))
         out = F.relu(self.fc1(out))
-        out = F.relu(self.fc2(out))
-        out = self.fc3(out)
+        # out = F.relu(self.fc2(out))
+        out = self.fc2(out)
         return out, out1
 
     def num_flat_features(self, x):
@@ -315,7 +319,7 @@ class DenseNetSC(nn.Module):
         nChannels += nDenseBlocks*growthRate
 
         self.bn1 = nn.BatchNorm2d(nChannels + memChannels)
-        self.fc1 = nn.Linear(1156, 100)
+        self.fc1 = nn.Linear(1880, 100)
         self.fc2 = nn.Linear(100, 40)
         self.fc3 = nn.Linear(40, nClasses)
 
@@ -366,13 +370,14 @@ class DenseNetSC(nn.Module):
         mem_data = torch.cat((x, mem_data), 1)
         x = self.denseF(mem_data)
 
-        x = F.avg_pool2d(F.relu(self.bn1(x)), 8)
+        out = F.relu(self.bn1(x))
+        x = F.avg_pool2d(out, 8)
         # print(out.size())
         x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        return x
+        return x, out
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
@@ -387,6 +392,92 @@ class DenseNetSC(nn.Module):
 
 
 
+
+
+###############################################################################
+###                             NEW CLASS                                   ###
+###############################################################################
+
+
+
+
+
+
+
+
+class AttentionMIL(nn.Module):
+    def __init__(self):
+        super(AttentionMIL, self).__init__()
+        self.L = 500
+        self.D = 128
+        self.K = 1
+
+        self.feature_extractor_part1 = nn.Sequential(
+            nn.Conv2d(1, 20, kernel_size=5),
+            nn.ReLU(),
+            nn.MaxPool2d(2, stride=2),
+            nn.Conv2d(20, 50, kernel_size=5),
+            nn.ReLU(),
+            nn.MaxPool2d(2, stride=2)
+        )
+
+        self.feature_extractor_part2 = nn.Sequential(
+            nn.Linear(50 * 4 * 4, self.L),
+            nn.ReLU(),
+        )
+
+        self.attention = nn.Sequential(
+            nn.Linear(self.L, self.D),
+            nn.Tanh(),
+            nn.Linear(self.D, self.K)
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Linear(self.L*self.K, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        # x = x.squeeze(0)
+
+        H = self.feature_extractor_part1(x)
+        H = H.view(-1, self.num_flat_features(H))
+        H = self.feature_extractor_part2(H)  # NxL
+
+        A = self.attention(H)  # NxK
+        A = torch.transpose(A, 1, 0)  # KxN
+        A = F.softmax(A, dim=1)  # softmax over N
+
+        M = torch.mm(A, H)  # KxL
+
+        Y_prob = self.classifier(M)
+        Y_hat = torch.ge(Y_prob, 0.5).float()
+
+        return Y_prob, A
+        #return Y_prob, Y_hat, A
+
+    # AUXILIARY METHODS
+    def calculate_classification_error(self, X, Y):
+        Y = Y.float()
+        _, Y_hat, _ = self.forward(X)
+        error = 1. - Y_hat.eq(Y).cpu().float().mean().data[0]
+
+        return error, Y_hat
+
+    def calculate_objective(self, X, Y):
+        Y = Y.float()
+        Y_prob, _, A = self.forward(X)
+        Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
+        neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli
+
+        return neg_log_likelihood, A
+
+    def num_flat_features(self, x):
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features
 
 
 

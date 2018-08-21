@@ -1,5 +1,4 @@
 #!/g/kreshuk/lukoianov/miniconda3/envs/inferno/bin/python3
-
 import numpy as np
 import os
 from PIL import Image
@@ -18,8 +17,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
+import inferno.io.transform as inftransforms
 
-from densnet_impl import DenseNet, DenseNetSC, OrdCNN
+
+from densnet_impl import DenseNet, DenseNetSC, OrdCNN, AttentionMIL
 from dataset_impl import CentriollesDatasetOn, CentriollesDatasetPatients
 
 
@@ -73,20 +74,33 @@ def save_last_conv_activations(net, lla, dataset, name):
 
 
 if __name__ == "__main__":
-    print('INFO: Stats detection started')
-    sys.stdout.flush()
-    #gme, gstd = 128, 10
-    gme, gstd = detect_mean_std()
-    print('INFO: Stats detection ended')
+    # print('INFO: Stats detection started')
+    # sys.stdout.flush()
+    # #gme, gstd = 128, 10
+    # gme, gstd = detect_mean_std()
+    print('INFO: Dataset loading started')
     sys.stdout.flush()
 
-    final_tr = transforms.Compose([transforms.RandomRotation(180),
-                               transforms.RandomVerticalFlip(),
-                               transforms.ToTensor(),
-                               transforms.Normalize((gme, ), (gstd, ))])
+    train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
+                                    transforms.RandomHorizontalFlip(),
+                                    transforms.RandomApply(
+                                        [transforms.RandomAffine(degrees  =180,
+                                                            translate=(0.1, 0.1),
+                                                            scale    =(0.9, 1.0),
+                                                            shear    =10)]),
+                                    inftransforms.image.PILImage2NumPyArray(),
+                                    inftransforms.image.ElasticTransform(alpha=100, sigma=50),
+                                    inftransforms.generic.NormalizeRange(normalize_by=255.0),
+                                    inftransforms.generic.AsTorchBatch(dimensionality=2)])
 
-    train_ds = CentriollesDatasetPatients(transform=final_tr)
-    test_ds  = CentriollesDatasetPatients(transform=final_tr, train=False)
+    test_tr  = transforms.Compose([ transforms.RandomVerticalFlip(),
+                                    transforms.RandomHorizontalFlip(),
+                                    inftransforms.image.PILImage2NumPyArray(),
+                                    inftransforms.generic.NormalizeRange(normalize_by=255.0),
+                                    inftransforms.generic.AsTorchBatch(dimensionality=2)])
+
+    train_ds = CentriollesDatasetPatients(transform=train_tr)
+    test_ds  = CentriollesDatasetPatients(transform=test_tr, train=False)
 
     train_dl = DataLoader(train_ds,  batch_size=1, shuffle=True, num_workers=3)
     test_dl  = DataLoader(test_ds,  batch_size=1, shuffle=True, num_workers=3)
@@ -102,12 +116,14 @@ if __name__ == "__main__":
     print('Train dataset balance for patients: ', train_ds.class_balance_for_patients())
     print('Test  dataset balance for patients: ', test_ds.class_balance_for_patients())
     sys.stdout.flush()
-    #net = DenseNet(growthRate=12, depth=30, reduction=0.5, bottleneck=True, nClasses=2)
-    net = OrdCNN()
+    net = AttentionMIL()
+    # net = DenseNet(growthRate=5, depth=46, reduction=0.5, bottleneck=True, nClasses=2)
+    # net = OrdCNN()
 
     print('  + Number of params: {}'.format(
         sum([p.data.nelement() for p in net.parameters()])))
     sys.stdout.flush()
+
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print('Will be used : ', device)
@@ -115,8 +131,8 @@ if __name__ == "__main__":
     net.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    # optimizer = optim.SGD(net.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-3)
-    optimizer = optim.Adam(net.parameters(), lr=1e-4, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-5, amsgrad=False)
+    #optimizer = optim.SGD(net.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-3)
+    optimizer = optim.Adam(net.parameters(), lr=5e-5, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-6, amsgrad=False)
 
     train_loss_ar = []
     test_loss_ar = []
