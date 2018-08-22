@@ -20,7 +20,7 @@ from torchvision import transforms, utils
 import inferno.io.transform as inftransforms
 
 
-from densnet_impl import DenseNet, DenseNetSC, OrdCNN, AttentionMIL
+from nets_impl import DenseNet, DenseNetSC, OrdCNN, AttentionMIL
 from dataset_impl import CentriollesDatasetOn, CentriollesDatasetPatients
 
 
