@@ -52,8 +52,10 @@ if __name__ == "__main__":
     kargs = ARGUMENTS_FOR_RUN + '--net_id ' + args.prefix + ' ' + ' '.join(unknown)
 
     parent_dir = 'models/{}/'.format(args.arch + '_' + args.prefix)
-    if not os.path.exists(parent_dir):
-        os.makedirs(parent_dir)
+    if os.path.exists(parent_dir):
+        print('Directory already exists! Aborting')
+        exit()
+    os.makedirs(parent_dir)
 
     bash_script_text = slurm_script_template.format(args.prefix, PROJECT, GROUP_NAME, args.mem, args.time, 
                                                     parent_dir, parent_dir, MAIL_TYPE, EMAIL) + '\n' +\

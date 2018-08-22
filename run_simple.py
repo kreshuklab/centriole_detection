@@ -54,7 +54,7 @@ if __name__ == "__main__":
     
     # TRAINING SETTINGS
     trainer = Trainer(model)
-    trainer.bind_loader('train', train_dl).bind_loader('test', test_dl)
+    trainer.bind_loader('train', train_dl).bind_loader('validate', test_dl)
 
     if args.net_id != '':
         args.net_id = '_' + args.net_id
