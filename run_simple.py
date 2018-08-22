@@ -77,7 +77,7 @@ if __name__ == "__main__":
     logs_dir = 'models/simple{}/logs'.format(args.net_id)
     trainer.build_logger(TensorboardLogger(log_scalars_every=(1, 'epochs'),
                                            log_images_every=(10, 'epochs')),
-                                           log_directory='logs_dir')
+                                           log_directory=logs_dir)
     log_info('Logs will be written to {}'.format(logs_dir))
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

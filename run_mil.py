@@ -28,7 +28,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run learning of mil network implementation')
     parser.add_argument('--wsize', type=int, default=28, help='Size of bag images')
     parser.add_argument('--stride', type=float, default=0.5, help='Stride ratio')
-    
+
     parser.add_argument('--img_size', type=int, default=512, help='Save model weights each n epochs')
     parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate')
     parser.add_argument('--wd', type=float, default=1e-6, help='Weight decey')
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     logs_dir = 'models/mil{}/logs'.format(args.net_id)
     trainer.build_logger(TensorboardLogger(log_scalars_every=(1, 'epochs'),
                                            log_images_every=(10, 'epochs')),
-                                           log_directory='logs_dir')
+                                           log_directory=logs_dir)
     log_info('Logs will be written to {}'.format(logs_dir))
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

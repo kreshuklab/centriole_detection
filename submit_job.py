@@ -49,6 +49,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    ARGUMENTS_FOR_RUN += '--net_id ' + args.pref
+
     if args.prefix != '':
         args.prefix += '_'
 

@@ -58,7 +58,7 @@ class OrdCNN(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        return x, out
+        return x
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
@@ -225,7 +225,7 @@ class DenseNet(nn.Module):
         out = F.relu(self.fc1(out))
         # out = F.relu(self.fc2(out))
         out = self.fc2(out)
-        return out, out1
+        return out
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
@@ -375,7 +375,7 @@ class DenseNetSC(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        return x, out
+        return x
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
@@ -389,14 +389,9 @@ class DenseNetSC(nn.Module):
 
 
 
-
-
-
 ###############################################################################
 ###                             NEW CLASS                                   ###
 ###############################################################################
-
-
 
 
 
@@ -460,7 +455,7 @@ class AttentionMIL(nn.Module):
         _, Y_hat, _ = self.forward(X)
         error = 1. - Y_hat.eq(Y).cpu().float().mean().data[0]
 
-        return error, Y_hat
+        return error
 
     def calculate_objective(self, X, Y):
         Y = Y.float()
