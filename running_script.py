@@ -23,6 +23,7 @@ import inferno.io.transform as inftransforms
 from nets_impl import DenseNet, DenseNetSC, OrdCNN, AttentionMIL
 from dataset_impl import CentriollesDatasetOn, CentriollesDatasetPatients, CentriollesDatasetBags
 
+import argparse
 
 def detect_mean_std():
     all_data = CentriollesDatasetPatients(all_data=True, transform=transforms.ToTensor(), inp_size=512) 
@@ -142,7 +143,7 @@ if __name__ == "__main__":
     print('INFO: Learning had been started')
     sys.stdout.flush()
 
-    for epoch in range(400):  # loop over the dataset multiple time
+    for epoch in range(EPOCH_NUMBER):  # loop over the dataset multiple time
         running_loss = 0.0
         test_loss = 0.0
         for i, data in enumerate(train_dl, 0):

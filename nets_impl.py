@@ -28,8 +28,6 @@ import numpy as np
 
 
 
-
-
 class OrdCNN(nn.Module):
     def __init__(self):
         super(OrdCNN, self).__init__()

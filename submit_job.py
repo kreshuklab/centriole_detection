@@ -1,6 +1,6 @@
 #!/g/kreshuk/lukoianov/miniconda3/envs/inferno/bin/python3
-#DEFAULT SETTINGS
 
+#DEFAULT SETTINGS
 PROJECT    = 'centrioles_detection'
 GROUP_NAME = 'kreshuk'
 EMAIL      = 'artem.lukoianov@embl.de'
@@ -10,7 +10,7 @@ PREFIX     = ''
 MAIL_TYPE  = 'FAIL'
 
 ADDITIONAL_MODULES = 'module load cuDNN'
-RUNNING_COMAND     = './running_script.py'
+RUNNING_COMAND     = './run_densenet.py'
 ARGUMENTS_FOR_RUN  = ''
 
 slurm_script_template = \
