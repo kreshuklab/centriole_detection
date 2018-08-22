@@ -10,7 +10,9 @@ PREFIX     = ''
 MAIL_TYPE  = 'FAIL'
 
 ADDITIONAL_MODULES = 'module load cuDNN'
-RUNNING_COMAND     = './run_densenet.py'
+RUNNING_COMANDS    = {'densenet' : './run_densenet.py',
+                      'mil'      : './run_mil.py',
+                      'simple'   : './run_simple.py'}
 ARGUMENTS_FOR_RUN  = ''
 
 slurm_script_template = \
@@ -40,6 +42,8 @@ if __name__ == "__main__":
                         help='Prefix for the ouput files')
     parser.add_argument('--mem', type=int, default=MEMORY, dest='mem',
                         help='Amount of RAM to be reserved')
+    parser.add_argument('--arch', action='store', choices=RUNNING_COMANDS.keys(),
+                      help='Architecture of network to run')
     parser.add_argument('--time', type=int, default=TIME_LIMIT, dest='time',
                         help='Time limit for the script execution')
 
@@ -50,7 +54,7 @@ if __name__ == "__main__":
 
     bash_script_text = slurm_script_template.format(args.prefix, PROJECT, GROUP_NAME, args.mem, args.time, 
                                                     args.prefix, args.prefix, MAIL_TYPE, EMAIL) + '\n' +\
-                        ADDITIONAL_MODULES + '\n' + RUNNING_COMAND + ' ' + ARGUMENTS_FOR_RUN
+                        ADDITIONAL_MODULES + '\n' + RUNNING_COMANDS[args.arch] + ' ' + ARGUMENTS_FOR_RUN
                                     
     with open('slurm_script.sh', 'w') as f:
         print(bash_script_text, file=f)

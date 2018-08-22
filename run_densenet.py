@@ -1,8 +1,6 @@
 #!/g/kreshuk/lukoianov/miniconda3/envs/inferno/bin/python3
 
 #BASIC IMPORTS
-import numpy as np
-import os
 import argparse
 
 #INTERRNAL IMPORTS
@@ -13,6 +11,7 @@ from utils import get_basic_transforms, log_info
 #TORCH IMPORTS
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
 
 #INFERNO IMPORTS
 from inferno.trainers.basic import Trainer
@@ -63,7 +62,7 @@ if __name__ == "__main__":
     trainer = Trainer(model)
     trainer.bind_loader('train', train_dl).bind_loader('test', test_dl)
 
-    weight_dir = 'weights/densenet/{}'.format(net_id)
+    weight_dir = 'weights/densenet/{}'.format(args.net_id)
     if args.save_each != 0:
         trainer.save_to_directory(weight_dir).save_every((args.save_each, 'epochs'))
         log_info('Weights will be saved each {} epochs at {}'.format(args.save_each, weight_dir))
@@ -79,14 +78,14 @@ if __name__ == "__main__":
 
     trainer.set_max_num_epochs(args.epoch)
 
-    logs_dir = 'logs/densenet/{}'.format(net_id)
+    logs_dir = 'logs/densenet/{}'.format(args.net_id)
     trainer.build_logger(TensorboardLogger(log_scalars_every=(1, 'epochs'),
                                            log_images_every=(10, 'epochs')),
                                            log_directory='logs_dir')
-    log_info('logs will be written to {}'.format(logs_dir))
+    log_info('Logs will be written to {}'.format(logs_dir))
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    log_info('will be used : ', device)
+    log_info('Will be used : {}'.format(device))
     if device == 'cpu':
         trainer.cuda()
     
