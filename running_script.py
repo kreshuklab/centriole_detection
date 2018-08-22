@@ -21,7 +21,7 @@ import inferno.io.transform as inftransforms
 
 
 from nets_impl import DenseNet, DenseNetSC, OrdCNN, AttentionMIL
-from dataset_impl import CentriollesDatasetOn, CentriollesDatasetPatients
+from dataset_impl import CentriollesDatasetOn, CentriollesDatasetPatients, CentriollesDatasetBags
 
 
 def detect_mean_std():
@@ -99,8 +99,8 @@ if __name__ == "__main__":
                                     inftransforms.generic.NormalizeRange(normalize_by=255.0),
                                     inftransforms.generic.AsTorchBatch(dimensionality=2)])
 
-    train_ds = CentriollesDatasetPatients(transform=train_tr)
-    test_ds  = CentriollesDatasetPatients(transform=test_tr, train=False)
+    train_ds = CentriollesDatasetBags(transform=train_tr, inp_size=128)
+    test_ds  = CentriollesDatasetBags(transform=test_tr,  inp_size=128, train=False)
 
     train_dl = DataLoader(train_ds,  batch_size=1, shuffle=True, num_workers=3)
     test_dl  = DataLoader(test_ds,  batch_size=1, shuffle=True, num_workers=3)

@@ -235,7 +235,7 @@ class CentriollesDatasetBags(Dataset):
     def __getitem__(self, idx):
         if self.transform:
             images, labels = self.transform(self.samples[idx]), self.classes[idx]
-        else
+        else:
             images, labels = self.samples[idx], self.classes[idx]
         images = image2bag(images.float())
         return images, labels
