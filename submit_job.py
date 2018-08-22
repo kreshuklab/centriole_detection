@@ -1,3 +1,4 @@
+#!/g/kreshuk/lukoianov/miniconda3/envs/inferno/bin/python3
 #DEFAULT SETTINGS
 
 PROJECT    = 'centrioles_detection'
