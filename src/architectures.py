@@ -41,7 +41,7 @@ class OrdCNN(nn.Module):
         self.conv6 = nn.Conv2d(16, 8, 3)
         self.conv7 = nn.Conv2d(8, 4, 3)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(100, 32) 
+        self.fc1 = nn.Linear(64, 32) 
         self.fc2 = nn.Linear(32, 8)
         self.fc3 = nn.Linear(8, 2)
 
@@ -51,9 +51,11 @@ class OrdCNN(nn.Module):
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         x = F.max_pool2d(F.relu(self.conv3(x)), 2)
         x = F.max_pool2d(F.relu(self.conv4(x)), 2)
-        x = F.max_pool2d(F.relu(self.conv5(x)), 4)
-        x = F.max_pool2d(F.relu(self.conv6(x)), 4)
+        x = F.max_pool2d(F.relu(self.conv5(x)), 2)
+        x = F.max_pool2d(F.relu(self.conv6(x)), 2)
+        print(x.size())
         out = F.relu(self.conv7(x))
+        print(out.size())
         x = out.view(-1, self.num_flat_features(out))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))

@@ -1,7 +1,7 @@
 #!/g/kreshuk/lukoianov/miniconda3/envs/inferno/bin/python3
 
 #DEFAULT SETTINGS
-PROJECT    = 'centrioles_detection'
+PROJECT    = '_centrioles_detection'
 GROUP_NAME = 'kreshuk'
 EMAIL      = 'artem.lukoianov@embl.de'
 MEMORY     = 20
@@ -18,7 +18,7 @@ ARGUMENTS_FOR_RUN  = ''
 slurm_script_template = \
 '''#!/bin/bash
 
-#SBATCH -J {}{}
+#SBATCH -J {}_{}{}
 #SBATCH -A {}
 #SBATCH -N 1
 #SBATCH -n 3
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         exit()
     os.makedirs(parent_dir)
 
-    bash_script_text = slurm_script_template.format(args.prefix, PROJECT, GROUP_NAME, args.mem, args.time, 
+    bash_script_text = slurm_script_template.format(args.prefix, args.arch, PROJECT, GROUP_NAME, args.mem, args.time, 
                                                     parent_dir, parent_dir, MAIL_TYPE, EMAIL) + '\n' +\
                         ADDITIONAL_MODULES + '\n' + RUNNING_COMANDS[args.arch] + ' ' + kargs
                                     
