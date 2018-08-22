@@ -81,10 +81,13 @@ if __name__ == "__main__":
     log_info('Logs will be written to {}'.format(logs_dir))
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    log_info('Will be used : {}'.format(device))
-    if device == 'cpu':
+
+    if 'cuda' in device:
+        log_info('Cuda used : {}'.format(device))
         trainer.cuda()
-    
+    else:
+        log_info('Cuda was not found, device : {}'.format(device))
+
     ## TRAINING
     trainer.fit()
 
