@@ -42,14 +42,14 @@ if __name__ == "__main__":
                         help='Prefix for the ouput files')
     parser.add_argument('--mem', type=int, default=MEMORY, dest='mem',
                         help='Amount of RAM to be reserved')
-    parser.add_argument('--arch', action='store', choices=RUNNING_COMANDS.keys(),
-                      help='Architecture of network to run')
+    parser.add_argument('--arch', action='store', choices=RUNNING_COMANDS.keys(), default='densenet',
+                        help='Architecture of network to run')
     parser.add_argument('--time', type=int, default=TIME_LIMIT, dest='time',
                         help='Time limit for the script execution')
 
     args = parser.parse_args()
 
-    ARGUMENTS_FOR_RUN += '--net_id ' + args.pref
+    ARGUMENTS_FOR_RUN += '--net_id ' + args.prefix
 
     if args.prefix != '':
         args.prefix += '_'
