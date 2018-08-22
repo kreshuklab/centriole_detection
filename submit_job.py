@@ -62,4 +62,5 @@ if __name__ == "__main__":
     with open('slurm_script.sh', 'w') as f:
         print(bash_script_text, file=f)
 
+    os.system('rm -rf models/densenet_01/logs')
     os.system('sbatch slurm_script.sh')
