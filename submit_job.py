@@ -24,8 +24,8 @@ slurm_script_template = \
 #SBATCH -n 3
 #SBATCH --mem {}G
 #SBATCH -t {}:00:00
-#SBATCH -o {}outfile.log
-#SBATCH -e {}errfile.log
+#SBATCH -o {}/outfile.log
+#SBATCH -e {}/errfile.log
 #SBATCH --mail-type={}
 #SBATCH --mail-user={}
 #SBATCH -p gpu
@@ -47,16 +47,17 @@ if __name__ == "__main__":
     parser.add_argument('--time', type=int, default=TIME_LIMIT, dest='time',
                         help='Time limit for the script execution')
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
 
-    ARGUMENTS_FOR_RUN += '--net_id ' + args.prefix
+    kargs = ARGUMENTS_FOR_RUN + '--net_id ' + args.prefix + ' ' + ' '.join(unknown)
 
-    if args.prefix != '':
-        args.prefix += '_'
+    parent_dir = 'models/{}/'.format(args.arch + '_' + args.prefix)
+    if not os.path.exists(parent_dir):
+        os.makedirs(parent_dir)
 
     bash_script_text = slurm_script_template.format(args.prefix, PROJECT, GROUP_NAME, args.mem, args.time, 
-                                                    args.prefix, args.prefix, MAIL_TYPE, EMAIL) + '\n' +\
-                        ADDITIONAL_MODULES + '\n' + RUNNING_COMANDS[args.arch] + ' ' + ARGUMENTS_FOR_RUN
+                                                    parent_dir, parent_dir, MAIL_TYPE, EMAIL) + '\n' +\
+                        ADDITIONAL_MODULES + '\n' + RUNNING_COMANDS[args.arch] + ' ' + kargs
                                     
     with open('slurm_script.sh', 'w') as f:
         print(bash_script_text, file=f)
