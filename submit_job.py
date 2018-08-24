@@ -10,9 +10,6 @@ PREFIX     = ''
 MAIL_TYPE  = 'FAIL'
 
 ADDITIONAL_MODULES = 'module load cuDNN'
-RUNNING_COMANDS    = {'densenet' : './run_densenet.py',
-                      'mil'      : './run_mil.py',
-                      'simple'   : './run_simple.py'}
 ARGUMENTS_FOR_RUN  = ''
 
 slurm_script_template = \
@@ -42,14 +39,12 @@ if __name__ == "__main__":
                         help='Prefix for the ouput files')
     parser.add_argument('--mem', type=int, default=MEMORY, dest='mem',
                         help='Amount of RAM to be reserved')
-    parser.add_argument('--arch', action='store', choices=RUNNING_COMANDS.keys(), default='densenet',
-                        help='Architecture of network to run')
     parser.add_argument('--time', type=int, default=TIME_LIMIT, dest='time',
                         help='Time limit for the script execution')
 
     args, unknown = parser.parse_known_args()
 
-    kargs = ARGUMENTS_FOR_RUN + '--net_id ' + args.prefix + ' ' + ' '.join(unknown)
+    kargs = ARGUMENTS_FOR_RUN + '--id ' + args.prefix + ' ' + ' '.join(unknown)
 
     parent_dir = 'models/{}/'.format(args.arch + '_' + args.prefix)
     if os.path.exists(parent_dir):

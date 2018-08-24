@@ -18,14 +18,81 @@ from PIL import Image
 import numpy as np
 
 
+#############
+#  LAYERS   #
+#############
 
+class View(nn.Module):
+    def __init__(self):
+        super(View, self).__init__()
+
+    def forward(self, x):
+        return x.view(x.size(0), -1)
+    
+class ConvMaxPool(nn.Module):
+    def __init__(self, conv_in, conv_out, conv_ker, pool_ker):
+        super(ConvPool, self).__init__()
+        self.conv = nn.Conv2d(conv_in, conv_out, conv_ker)
+        self.pool = nn.MaxPool(pool_ker)
+
+    def forward(self, x):
+        return self.pool(self.conv(x))
+
+
+class Bottleneck(nn.Module):
+    def __init__(self, nChannels, growthRate):
+        super(Bottleneck, self).__init__()
+        interChannels = 4*growthRate
+        self.bn1 = nn.BatchNorm2d(nChannels)
+        self.conv1 = nn.Conv2d(nChannels, interChannels, kernel_size=1,
+                               bias=False)
+        self.bn2 = nn.BatchNorm2d(interChannels)
+        self.conv2 = nn.Conv2d(interChannels, growthRate, kernel_size=3,
+                               padding=1, bias=False)
+
+    def forward(self, x):
+        out = self.conv1(F.relu(self.bn1(x)))
+        out = self.conv2(F.relu(self.bn2(out)))
+        out = torch.cat((x, out), 1)
+        return out
+
+class SingleLayer(nn.Module):
+    def __init__(self, nChannels, growthRate):
+        super(SingleLayer, self).__init__()
+        self.bn1 = nn.BatchNorm2d(nChannels)
+        self.conv1 = nn.Conv2d(nChannels, growthRate, kernel_size=3,
+                               padding=1, bias=False)
+
+    def forward(self, x):
+        out = self.conv1(F.relu(self.bn1(x)))
+        out = torch.cat((x, out), 1)
+        return out
+
+
+class Transition(nn.Module):
+    def __init__(self, nChannels, nOutChannels):
+        super(Transition, self).__init__()
+        self.bn1 = nn.BatchNorm2d(nChannels)
+        self.conv1 = nn.Conv2d(nChannels, nOutChannels, kernel_size=1,
+                               bias=False)
+
+    def forward(self, x):
+        out = self.conv1(F.relu(self.bn1(x)))
+        out = F.avg_pool2d(out, 2)
+        return out
+
+class Print(nn.Module):
+    def __init__(self):
+        super(Print, self).__init__()
+
+    def forward(self, x):
+        print(x.size())
+        return x
 
 
 ###############################################################################
 ###                             NEW CLASS                                   ###
 ###############################################################################
-
-
 
 
 class OrdCNN(nn.Module):
@@ -78,54 +145,6 @@ class OrdCNN(nn.Module):
 ###############################################################################
 ###                             NEW CLASS                                   ###
 ###############################################################################
-
-
-
-
-
-
-
-class Bottleneck(nn.Module):
-    def __init__(self, nChannels, growthRate):
-        super(Bottleneck, self).__init__()
-        interChannels = 4*growthRate
-        self.bn1 = nn.BatchNorm2d(nChannels)
-        self.conv1 = nn.Conv2d(nChannels, interChannels, kernel_size=1,
-                               bias=False)
-        self.bn2 = nn.BatchNorm2d(interChannels)
-        self.conv2 = nn.Conv2d(interChannels, growthRate, kernel_size=3,
-                               padding=1, bias=False)
-
-    def forward(self, x):
-        out = self.conv1(F.relu(self.bn1(x)))
-        out = self.conv2(F.relu(self.bn2(out)))
-        out = torch.cat((x, out), 1)
-        return out
-
-class SingleLayer(nn.Module):
-    def __init__(self, nChannels, growthRate):
-        super(SingleLayer, self).__init__()
-        self.bn1 = nn.BatchNorm2d(nChannels)
-        self.conv1 = nn.Conv2d(nChannels, growthRate, kernel_size=3,
-                               padding=1, bias=False)
-
-    def forward(self, x):
-        out = self.conv1(F.relu(self.bn1(x)))
-        out = torch.cat((x, out), 1)
-        return out
-
-
-class Transition(nn.Module):
-    def __init__(self, nChannels, nOutChannels):
-        super(Transition, self).__init__()
-        self.bn1 = nn.BatchNorm2d(nChannels)
-        self.conv1 = nn.Conv2d(nChannels, nOutChannels, kernel_size=1,
-                               bias=False)
-
-    def forward(self, x):
-        out = self.conv1(F.relu(self.bn1(x)))
-        out = F.avg_pool2d(out, 2)
-        return out
 
 
 class DenseNet(nn.Module):
@@ -235,7 +254,6 @@ class DenseNet(nn.Module):
         for s in size:
             num_features *= s
         return num_features
-
 
 
 
