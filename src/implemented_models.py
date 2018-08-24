@@ -2,6 +2,12 @@ from src.architectures import View
 
 import torch.nn as nn
 
+#### DenseNets ####
+
+DenseNet_BN_32k_to7x7_ap_3fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 100])
+DenseNet_BN_32k_to7x7_mp_3fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 100], max_pool=True)
+
+
 #### VGGS ###
 CNN_512_1conv_to15x15_6fc_32filter = \
          nn.Sequential(nn.Conv2d(1, 128, 32), nn.MaxPool2d(32), View(),
@@ -50,5 +56,4 @@ CNN_512_7conv_to4x4_3fc = \
                        nn.Linear(16 * 4 * 4, 16 * 4), nn.ReLU(),
                        nn.Linear(16 * 4, 16), nn.ReLU(),
                        nn.Linear(16, 2))
-
 

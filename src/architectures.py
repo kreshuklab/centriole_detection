@@ -17,6 +17,8 @@ import os
 from PIL import Image
 import numpy as np
 
+from src.utils import num_flat_features
+
 
 #############
 #  LAYERS   #
@@ -57,7 +59,7 @@ class Bottleneck(nn.Module):
         return out
 
 class SingleLayer(nn.Module):
-    def __init__(self, nChannels, growthRate):
+    def __init__(self, nChannels, growthRate=12):
         super(SingleLayer, self).__init__()
         self.bn1 = nn.BatchNorm2d(nChannels)
         self.conv1 = nn.Conv2d(nChannels, growthRate, kernel_size=3,
@@ -69,10 +71,11 @@ class SingleLayer(nn.Module):
         return out
 
 
-class Transition(nn.Module):
-    def __init__(self, nChannels, nOutChannels):
-        super(Transition, self).__init__()
+class TransitionLayer(nn.Module):
+    def __init__(self, nChannels, reduction):
+        super(TransitionLayer, self).__init__()
         self.bn1 = nn.BatchNorm2d(nChannels)
+        nOutChannels = int(math.floor(nChannels*reduction))
         self.conv1 = nn.Conv2d(nChannels, nOutChannels, kernel_size=1,
                                bias=False)
 
@@ -80,6 +83,23 @@ class Transition(nn.Module):
         out = self.conv1(F.relu(self.bn1(x)))
         out = F.avg_pool2d(out, 2)
         return out
+
+class DenseBlock(nn.Module):
+    def __init__(self, nChannels, growthRate, depth, bottleneck):
+        super(DenseBlock, self).__init__()
+        layers = []
+        for i in range(int(depth)):
+            if bottleneck:
+                layers.append(Bottleneck(nChannels, growthRate))
+            else:
+                layers.append(SingleLayer(nChannels, growthRate))
+            nChannels += growthRate
+
+        self.block = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.block(x)
+
 
 class Print(nn.Module):
     def __init__(self):
@@ -123,21 +143,11 @@ class OrdCNN(nn.Module):
         print(x.size())
         out = F.relu(self.conv7(x))
         print(out.size())
-        x = out.view(-1, self.num_flat_features(out))
+        x = out.view(-1, num_flat_features(out))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-
-    def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
-
-
-
 
 
 
@@ -148,112 +158,54 @@ class OrdCNN(nn.Module):
 
 
 class DenseNet(nn.Module):
-    def __init__(self, growthRate, depth, reduction, nClasses, bottleneck):
+    def __init__(self, growthRate, nLayers, nFc, reduction=0.5, nClasses=2, bottleneck=True, max_pool=False):
         super(DenseNet, self).__init__()
+        self.max_pool = max_pool
 
-        nDenseBlocks = (depth-4) // 3
-        if bottleneck:
-            nDenseBlocks //= 2
-
+        # First convolution layer
         nChannels = 2*growthRate
-        self.conv1 = nn.Conv2d(1, nChannels, kernel_size=3, padding=1,
-                               bias=False)
-        self.dense1 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans1 = Transition(nChannels, nOutChannels)
+        self.conv1 = nn.Conv2d(1, nChannels, kernel_size=3, padding=1, stride=2, bias=False)
 
-        nChannels = nOutChannels
-        self.dense2 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans2 = Transition(nChannels, nOutChannels)
+        # DenseBlocks + TransitionLayers 
+        main_blocks = []
+        for i, depth in enumerate(nLayers):
+            main_blocks.append(DenseBlock(nChannels, growthRate, depth, bottleneck))
+            nChannels += depth * growthRate
+            # Final Dense layer without transition
+            if i != len(nLayers) - 1:
+                main_blocks.append(TransitionLayer(nChannels, reduction))
+                nChannels = int(math.floor(nChannels*reduction))
+        self.main_blocks = nn.Sequential(*main_blocks)
 
-        nChannels = nOutChannels
-        self.dense3 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans3 = Transition(nChannels, nOutChannels)
+        # Classification part (FC after global pooling)
+        self.bn = nn.BatchNorm2d(nChannels)
 
-        nChannels = nOutChannels
-        self.dense4 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans4 = Transition(nChannels, nOutChannels)
+        fc_part = []
+        for i in range(len(nFc) - 1):
+            fc_part.append(nn.Linear(nFc[i], nFc[i+1]))
+            fc_part.append(nn.ReLU())
+        self.fc_part = nn.Sequential(*fc_part)
 
-        nChannels = nOutChannels
-        self.dense5 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans5 = Transition(nChannels, nOutChannels)
+        self.clf = nn.Linear(nFc[-1], nClasses)
 
-        nChannels = nOutChannels
-        self.dense6 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans6 = Transition(nChannels, nOutChannels)
-
-        nChannels = nOutChannels
-        self.dense7 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans7 = Transition(nChannels, nOutChannels)
-
-        nChannels = nOutChannels
-        self.denseF = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        nChannels += nDenseBlocks*growthRate
-
-        self.bn1 = nn.BatchNorm2d(nChannels)
-        self.fc1 = nn.Linear(1104, 8)
-        self.fc2 = nn.Linear(8, nClasses)
-        
-        # self.fc3 = nn.Linear(4, nClasses)
-
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-            elif isinstance(m, nn.Linear):
-                m.bias.data.zero_()
-
-    def _make_dense(self, nChannels, growthRate, nDenseBlocks, bottleneck):
-        layers = []
-        for i in range(int(nDenseBlocks)):
-            if bottleneck:
-                layers.append(Bottleneck(nChannels, growthRate))
-            else:
-                layers.append(SingleLayer(nChannels, growthRate))
-            nChannels += growthRate
-        return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = self.conv1(x)
-        out = self.trans1(self.dense1(out))
-        out = self.trans2(self.dense2(out))
-        out = self.trans3(self.dense3(out))
-        out = self.trans4(self.dense4(out))
-        out = self.trans5(self.dense5(out))
-        out = self.trans6(self.dense6(out))
-        out = self.trans7(self.dense7(out))
-        out = self.denseF(out)
-        out1 = F.relu(self.bn1(out))
+        out = F.max_pool2d(self.conv1(x), 3, stride=2)
+        out = self.main_blocks(out)
+        
+        out = self.bn(out)
+        # it is a global pooling, so the resolution of the image after all previous blocks should be 7x7
+        # is it ok for our part to have an avg pooling in the end? 
+        if self.max_pool:
+            out = F.max_pool2d(out, 7)
+        else:
+            out = F.avg_pool2d(out, 7)
 
-        # print(out.size())
-        out = out.view(-1, self.num_flat_features(out1))
-        out = F.relu(self.fc1(out))
-        # out = F.relu(self.fc2(out))
-        out = self.fc2(out)
+        out = torch.squeeze(out)
+        # There was not anything about ReLu and BN in the original paper
+        out = self.fc_part(out)
+        out = self.clf(out)
         return out
-
-    def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
 
 
 
@@ -391,7 +343,7 @@ class DenseNetSC(nn.Module):
         out = F.relu(self.bn1(x))
         x = F.avg_pool2d(out, 8)
         # print(out.size())
-        x = x.view(-1, self.num_flat_features(x))
+        x = x.view(-1, num_flat_features(x))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
