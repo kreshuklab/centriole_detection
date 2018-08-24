@@ -47,8 +47,7 @@ if __name__ == "__main__":
 
     args, unknown = parser.parse_known_args()
 
-    kargs = ARGUMENTS_FOR_RUN + '--id ' + args.id + '--model_name ' + args.
-    model_name  + ' '  + ' '.join(unknown)
+    kargs = ARGUMENTS_FOR_RUN + '--id ' + args.id + ' --model_name ' + args.model_name  + ' '  + ' '.join(unknown)
 
     parent_dir = 'models/{}/{}'.format(args.model_name, args.id)
     if os.path.exists(parent_dir):
