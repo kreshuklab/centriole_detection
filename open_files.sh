@@ -13,5 +13,5 @@ echo
 echo To run tensorboard:
 echo tensorboard --logdir=models --port=6007
 echo
-echo To submit densnet:
-echo ./submit_job.py --arch densenet --id 01 --BN --GR 5 --red 0.5 --depth 46
+echo To submit model:
+echo ./submit_job.py --model_name CNN_512_7conv_to4x4_3fc --lr 0.001 --id 01 
