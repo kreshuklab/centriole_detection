@@ -1,11 +1,10 @@
 #!/bin/bash
 
-../rsub run_densenet.py
-../rsub run_simple.py
-../rsub run_mil.py
+../rsub run_model.py
 ../rsub src/datasets.py
 ../rsub src/utils.py
 ../rsub src/architectures.py
+../rsub src/implemented_models.py
 
 export LC_ALL="en_US.UTF-8"
 export LC_CTYPE="en_US.UTF-8"

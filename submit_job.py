@@ -9,6 +9,7 @@ TIME_LIMIT = 10
 PREFIX     = ''
 MAIL_TYPE  = 'FAIL'
 
+RUNNING_COMAND = './run_model.py'
 ADDITIONAL_MODULES = 'module load cuDNN'
 ARGUMENTS_FOR_RUN  = ''
 
@@ -54,7 +55,7 @@ if __name__ == "__main__":
 
     bash_script_text = slurm_script_template.format(args.prefix, args.arch, PROJECT, GROUP_NAME, args.mem, args.time, 
                                                     parent_dir, parent_dir, MAIL_TYPE, EMAIL) + '\n' +\
-                        ADDITIONAL_MODULES + '\n' + RUNNING_COMANDS[args.arch] + ' ' + kargs
+                        ADDITIONAL_MODULES + '\n' + RUNNING_COMAND + ' ' + kargs
                                     
     with open('slurm_script.sh', 'w') as f:
         print(bash_script_text, file=f)
