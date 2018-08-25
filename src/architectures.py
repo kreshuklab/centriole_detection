@@ -201,7 +201,7 @@ class DenseNet(nn.Module):
         else:
             out = F.avg_pool2d(out, 7)
 
-        out = torch.squeeze(out)
+        out = out.view(out.size(0), -1)
         # There was not anything about ReLu and BN in the original paper
         out = self.fc_part(out)
         out = self.clf(out)

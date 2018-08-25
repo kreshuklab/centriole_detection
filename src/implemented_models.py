@@ -1,4 +1,4 @@
-from src.architectures import View
+from src.architectures import View, DenseNet
 
 import torch.nn as nn
 
