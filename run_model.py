@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     # DATASETS INITIALIZATION
     train_tr, test_tr = get_basic_transforms()
-    if args.use_bag:
+    if args.use_bags:
         train_ds = CentriollesDatasetBags(transform=train_tr, inp_size=args.img_size)
         test_ds  = CentriollesDatasetBags(transform=test_tr,  inp_size=args.img_size, train=False)
     else:
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     trainer.build_metric('CategoricalError')
 
     trainer.build_criterion(nn.CrossEntropyLoss)
-    trainer.build_optimizer('Adam', lr=args.lr, weight_decay=args.wd)
+    trainer.build_optimizer('Adam', lr=args.lr)
 
     trainer.set_max_num_epochs(args.epoch)
 

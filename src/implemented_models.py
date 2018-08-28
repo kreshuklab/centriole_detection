@@ -8,6 +8,7 @@ MIL_32x32_to4x4 = AttentionMIL()
 #### DenseNets ####
 DenseNet_BN_32k_to7x7_ap_3fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 100])
 DenseNet_BN_32k_to7x7_mp_3fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 100], max_pool=True)
+DenseNet_BN_32k_to7x7_mp_5fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 512, 128, 32], max_pool=True)
 
 
 #### VGGS ###
