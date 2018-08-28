@@ -29,6 +29,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run learning of simple CNN implementation')
 
     parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
+    parser.add_argument('--use_bags', action='store_true', help='For MIL models images should be represented as bag')
     parser.add_argument('--img_size', type=int, default=512, help='Size of input images')
     parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate')
     parser.add_argument('--wd', type=float, default=1e-6, help='Weight decey')
@@ -43,8 +44,12 @@ if __name__ == "__main__":
 
     # DATASETS INITIALIZATION
     train_tr, test_tr = get_basic_transforms()
-    train_ds = CentriollesDatasetPatients(transform=train_tr, inp_size=args.img_size)
-    test_ds  = CentriollesDatasetPatients(transform=test_tr,  inp_size=args.img_size, train=False)
+    if args.use_bag:
+        train_ds = CentriollesDatasetBags(transform=train_tr, inp_size=args.img_size)
+        test_ds  = CentriollesDatasetBags(transform=test_tr,  inp_size=args.img_size, train=False)
+    else:
+        train_ds = CentriollesDatasetPatients(transform=train_tr, inp_size=args.img_size)
+        test_ds  = CentriollesDatasetPatients(transform=test_tr,  inp_size=args.img_size, train=False)
 
     train_dl = DataLoader(train_ds, batch_size=1, shuffle=True, num_workers=3)
     test_dl  = DataLoader(test_ds,  batch_size=1, shuffle=True, num_workers=3)

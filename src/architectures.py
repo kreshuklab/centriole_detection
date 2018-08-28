@@ -20,9 +20,11 @@ import numpy as np
 from src.utils import num_flat_features
 
 
+
 #############
 #  LAYERS   #
 #############
+
 
 class View(nn.Module):
     def __init__(self):
@@ -151,14 +153,15 @@ class OrdCNN(nn.Module):
 
 
 
-
 ###############################################################################
 ###                             NEW CLASS                                   ###
 ###############################################################################
 
 
+
 class DenseNet(nn.Module):
-    def __init__(self, growthRate, nLayers, nFc, reduction=0.5, nClasses=2, bottleneck=True, max_pool=False):
+    def __init__(self, growthRate, nLayers, nFc, reduction=0.5, nClasses=2, 
+                        crosscon=False, bottleneck=True, max_pool=False):
         super(DenseNet, self).__init__()
         self.max_pool = max_pool
 
@@ -201,6 +204,10 @@ class DenseNet(nn.Module):
         else:
             out = F.avg_pool2d(out, 7)
 
+        #for skip connections:
+        # mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
+        # mem_data = torch.cat((x, mem_data), 1)
+
         out = out.view(out.size(0), -1)
         # There was not anything about ReLu and BN in the original paper
         out = self.fc_part(out)
@@ -210,161 +217,9 @@ class DenseNet(nn.Module):
 
 
 
-
-
 ###############################################################################
 ###                             NEW CLASS                                   ###
 ###############################################################################
-
-
-
-
-
-
-class DenseNetSC(nn.Module):
-    def __init__(self, growthRate, depth, reduction, nClasses, bottleneck):
-        super(DenseNetSC, self).__init__()
-
-        nDenseBlocks = (depth-4) // 3
-        if bottleneck:
-            nDenseBlocks //= 2
-
-        nChannels = 2*growthRate
-        memChannels = 1
-        self.conv1 = nn.Conv2d(1, nChannels, kernel_size=3, padding=1,
-                               bias=False)
-        self.dense1 = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
-        tmp = nChannels
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans1 = Transition(nChannels+ memChannels, nOutChannels)
-        memChannels += tmp
-
-        nChannels = nOutChannels
-        self.dense2 = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
-        tmp = nChannels
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans2 = Transition(nChannels + memChannels, nOutChannels)
-        memChannels += tmp
-
-        nChannels = nOutChannels
-        self.dense3 = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
-        tmp = nChannels
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans3 = Transition(nChannels + memChannels, nOutChannels)
-        memChannels += tmp
-
-        nChannels = nOutChannels
-        self.dense4 = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
-        tmp = nChannels
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans4 = Transition(nChannels + memChannels, nOutChannels)
-        memChannels += tmp
-
-        nChannels = nOutChannels
-        self.dense5 = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
-        tmp = nChannels
-        nChannels += nDenseBlocks*growthRate
-        nOutChannels = int(math.floor(nChannels*reduction))
-        self.trans5 = Transition(nChannels + memChannels, nOutChannels)
-        memChannels += tmp
-
-        # nChannels = nOutChannels
-        # self.dense6 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        # nChannels += nDenseBlocks*growthRate
-        # nOutChannels = int(math.floor(nChannels*reduction))
-        # self.trans6 = Transition(nChannels, nOutChannels)
-
-        # nChannels = nOutChannels
-        # self.dense7 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck)
-        # nChannels += nDenseBlocks*growthRate
-        # nOutChannels = int(math.floor(nChannels*reduction))
-        # self.trans7 = Transition(nChannels, nOutChannels)
-
-        nChannels = nOutChannels
-        self.denseF = self._make_dense(nChannels + memChannels, growthRate, nDenseBlocks, bottleneck)
-        nChannels += nDenseBlocks*growthRate
-
-        self.bn1 = nn.BatchNorm2d(nChannels + memChannels)
-        self.fc1 = nn.Linear(1880, 100)
-        self.fc2 = nn.Linear(100, 40)
-        self.fc3 = nn.Linear(40, nClasses)
-
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-            elif isinstance(m, nn.Linear):
-                m.bias.data.zero_()
-
-    def _make_dense(self, nChannels, growthRate, nDenseBlocks, bottleneck):
-        layers = []
-        for i in range(int(nDenseBlocks)):
-            if bottleneck:
-                layers.append(Bottleneck(nChannels, growthRate))
-            else:
-                layers.append(SingleLayer(nChannels, growthRate))
-            nChannels += growthRate
-        return nn.Sequential(*layers)
-
-    def forward(self, x):
-        mem_data = x
-        x = self.conv1(mem_data)
-        mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
-        mem_data = torch.cat((x, mem_data), 1)
-        x = self.trans1(self.dense1(mem_data))
-        
-        mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
-        mem_data = torch.cat((x, mem_data), 1)
-        x = self.trans2(self.dense2(mem_data))
-        
-        mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
-        mem_data = torch.cat((x, mem_data), 1)
-        x = self.trans3(self.dense3(mem_data))
-        
-        mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
-        mem_data = torch.cat((x, mem_data), 1)
-        x = self.trans4(self.dense4(mem_data))
-        
-        mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
-        mem_data = torch.cat((x, mem_data), 1)
-        x = self.trans5(self.dense5(mem_data))
-       
-        mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
-        mem_data = torch.cat((x, mem_data), 1)
-        x = self.denseF(mem_data)
-
-        out = F.relu(self.bn1(x))
-        x = F.avg_pool2d(out, 8)
-        # print(out.size())
-        x = x.view(-1, num_flat_features(x))
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-    def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
-
-
-
-
-
-
-###############################################################################
-###                             NEW CLASS                                   ###
-###############################################################################
-
 
 
 
@@ -398,15 +253,15 @@ class AttentionMIL(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(self.L*self.K, 1),
-            nn.Sigmoid()
+            nn.Linear(self.L*self.K, 2),
+            #nn.Sigmoid()
         )
 
     def forward(self, x):
-        # x = x.squeeze(0)
+        x = x.squeeze(0)
 
         H = self.feature_extractor_part1(x)
-        H = H.view(-1, self.num_flat_features(H))
+        H = H.view(-1, 50 * 4 * 4)
         H = self.feature_extractor_part2(H)  # NxL
 
         A = self.attention(H)  # NxK
@@ -418,32 +273,24 @@ class AttentionMIL(nn.Module):
         Y_prob = self.classifier(M)
         Y_hat = torch.ge(Y_prob, 0.5).float()
 
-        return Y_prob, A
         #return Y_prob, Y_hat, A
+        return Y_prob
 
     # AUXILIARY METHODS
-    def calculate_classification_error(self, X, Y):
-        Y = Y.float()
-        _, Y_hat, _ = self.forward(X)
-        error = 1. - Y_hat.eq(Y).cpu().float().mean().data[0]
+    # def calculate_classification_error(self, X, Y):
+    #     Y = Y.float()
+    #     _, Y_hat, _ = self.forward(X)
+    #     error = 1. - Y_hat.eq(Y).cpu().float().mean().data[0]
 
-        return error
+    #     return error, Y_hat
 
-    def calculate_objective(self, X, Y):
-        Y = Y.float()
-        Y_prob, _, A = self.forward(X)
-        Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
-        neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli
+    # def calculate_objective(self, X, Y):
+    #     Y = Y.float()
+    #     Y_prob, _, A = self.forward(X)
+    #     Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
+    #     neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli
 
-        return neg_log_likelihood, A
-
-    def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
-
+    #     return neg_log_likelihood, A
 
 
 

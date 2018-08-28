@@ -44,6 +44,7 @@ if __name__ == "__main__":
                         help='Name of the model from the list of implemented models')
     parser.add_argument('--time', type=int, default=TIME_LIMIT, dest='time',
                         help='Time limit for the script execution')
+    
 
     args, unknown = parser.parse_known_args()
 
