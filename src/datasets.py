@@ -175,8 +175,10 @@ def image2bag(img, wsize=(28, 28), stride=0.5):
     c, w, h = img.size()
     for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
         for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
-            bag.append(img[:,cx:cx+wsize[0], cy:cy+wsize[1]])
+            cropped = img[:,cx:cx+wsize[0], cy:cy+wsize[1]]
+            bag.append(cropped)
     return torch.stack(bag)
+
 
 
 class CentriollesDatasetBags(Dataset):

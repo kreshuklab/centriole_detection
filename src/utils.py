@@ -17,11 +17,11 @@ def get_basic_transforms():
                                                                  shear    =10)]),
                                     inftransforms.image.PILImage2NumPyArray(),
                                     inftransforms.image.ElasticTransform(alpha=100, sigma=50),
-                                    inftransforms.generic.NormalizeRange(normalize_by=255.0),
+                                    inftransforms.generic.Normalize(),
                                     inftransforms.generic.AsTorchBatch(dimensionality=2)])
 
     test_tr  = transforms.Compose([ inftransforms.image.PILImage2NumPyArray(),
-                                    inftransforms.generic.NormalizeRange(normalize_by=255.0),
+                                    inftransforms.generic.Normalize(),
                                     inftransforms.generic.AsTorchBatch(dimensionality=2)])
     return train_tr, test_tr
 
