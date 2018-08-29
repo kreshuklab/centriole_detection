@@ -94,7 +94,7 @@ class CentriollesDatasetOn(Dataset):
 class CentriollesDatasetPatients(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, nums=[397, 3971, 402, 403, 406, 4021, 396], main_dir='dataset/new_edition/in_png',
+    def __init__(self, nums=[397, 402, 403, 406, 396], main_dir='dataset/new_edition/in_png_normilized',
                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=2048):
         self.samples = []
         self.classes = []
@@ -182,7 +182,7 @@ def image2bag(img, wsize=(28, 28), stride=0.5):
 class CentriollesDatasetBags(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, nums=[397, 3971, 402, 403, 406, 4021, 396], main_dir='dataset/new_edition/in_png',
+    def __init__(self, nums=[397, 402, 403, 406, 396], main_dir='dataset/new_edition/in_png_normilized',
                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512, wsize=(28, 28), stride=0.5):
         self.samples = []
         self.classes = []
