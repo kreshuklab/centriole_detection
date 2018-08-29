@@ -18,7 +18,6 @@ from torch.utils.data import DataLoader
 from inferno.trainers.basic import Trainer
 from inferno.trainers.callbacks.logging.tensorboard import TensorboardLogger
 
-
 ###################
 #    MAIN CODE    #
 ###################
@@ -82,7 +81,7 @@ if __name__ == "__main__":
     trainer.set_max_num_epochs(args.epoch)
 
     logs_dir = os.path.join(curent_model_dir, 'logs')
-    trainer.build_logger(TensorboardLogger(log_scalars_every=(1, 'epochs'),
+    trainer.build_logger(TensorboardLogger(log_scalars_every=(1, 'iteration'),
                                            log_images_every=(10, 'epochs')),
                                            log_directory=logs_dir)
     log_info('Logs will be written to {}'.format(logs_dir))
