@@ -1,12 +1,14 @@
 import torch.nn.functional as F
 
-def train(model, train_dl, criterion, optimizer):
+def train(model, train_dl, criterion, optimizer, device):
     model.train()
     criterion.train()
 
     global_loss = 0.0
     
     for inputs, label in train_dl:
+        inputs, labels = inputs.to(device), labels.to(device)
+
         optimizer.zero_grad()
         outputs = model(inputs)
         loss = criterion(outputs, label)
@@ -19,7 +21,7 @@ def train(model, train_dl, criterion, optimizer):
     return global_loss
     
 
-def validate(model, test_dl, criterion):
+def validate(model, test_dl, criterion, device):
     model.eval()
     criterion.eval()
 
@@ -27,6 +29,8 @@ def validate(model, test_dl, criterion):
     accuracy    = 0.0 
     
     for inputs, label in test_dl:
+        inputs, labels = inputs.to(device), labels.to(device)
+        
         outputs = model(inputs)
         loss = criterion(outputs, label)
         global_loss += loss.item()

@@ -114,11 +114,11 @@ if __name__ == "__main__":
     best_loss  = 1e5
     while True:
         log_info('Epoch %d satrted' %(epoch_num))
-        loss = train(model, train_dl, criterion, optimizer)
+        loss = train(model, train_dl, criterion, optimizer, device)
         writer.add_scalar('train_loss', loss, epoch_num)
         writer.add_scalar('learning_rate', float(scheduler.get_lr()[0]), epoch_num)
         
-        loss, acc = validate(model, test_dl, criterion)
+        loss, acc = validate(model, test_dl, criterion, device)
         writer.add_scalar('test_loss', loss, epoch_num)
         writer.add_scalar('test_accuracy', acc, epoch_num)
 
