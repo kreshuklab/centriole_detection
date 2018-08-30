@@ -7,7 +7,7 @@ def train(model, train_dl, criterion, optimizer, device):
     global_loss = 0.0
     
     for inputs, label in train_dl:
-        inputs, labels = inputs.to(device), labels.to(device)
+        inputs, label = inputs.to(device), label.to(device)
 
         optimizer.zero_grad()
         outputs = model(inputs)
@@ -29,8 +29,8 @@ def validate(model, test_dl, criterion, device):
     accuracy    = 0.0 
     
     for inputs, label in test_dl:
-        inputs, labels = inputs.to(device), labels.to(device)
-        
+        inputs, label = inputs.to(device), label.to(device)
+
         outputs = model(inputs)
         loss = criterion(outputs, label)
         global_loss += loss.item()
