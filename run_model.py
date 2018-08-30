@@ -51,13 +51,13 @@ if __name__ == "__main__":
     # DATASETS INITIALIZATION
     train_tr, test_tr = get_basic_transforms()
     if args.use_bags:
-        train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402], inp_size=args.img_size)
-        test_ds  = CentriollesDatasetBags(transform=test_tr, nums=[402], inp_size=args.img_size, train=False)
+        train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size)
+        test_ds  = CentriollesDatasetBags(transform=test_tr, nums=[402, 403, 406, 396], inp_size=args.img_size, train=False)
         log_info('Bags dataset is used')
         #TODO: Average bag size
     else:
-        train_ds = CentriollesDatasetPatients(transform=train_tr, nums=[402], inp_size=args.img_size)
-        test_ds  = CentriollesDatasetPatients(transform=test_tr,  nums=[402], inp_size=args.img_size, train=False)
+        train_ds = CentriollesDatasetPatients(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size)
+        test_ds  = CentriollesDatasetPatients(transform=test_tr,  nums=[402, 403, 406, 396], inp_size=args.img_size, train=False)
         log_info('Patients dataset is used')  
 
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=3)
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         writer.add_scalar('test_loss', loss, epoch_num)
         writer.add_scalar('test_accuracy', acc, epoch_num)
 
-        if args.epoch != 0 and epoch_num >= arg.epoch:
+        if args.epoch != 0 and epoch_num >= args.epoch:
             log_info('Max number of epochs is exceeded. Training is finished!')
             break
         
