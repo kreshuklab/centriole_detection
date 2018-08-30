@@ -113,7 +113,7 @@ if __name__ == "__main__":
     epoch_num = 0
     best_loss  = 1e5
     while True:
-        print(epoch_num)
+        log_info('Epoch %d satrted' %(epoch_num))
         loss = train(model, train_dl, criterion, optimizer)
         writer.add_scalar('train_loss', loss, epoch_num)
         writer.add_scalar('learning_rate', float(scheduler.get_lr()[0]), epoch_num)
