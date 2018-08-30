@@ -34,7 +34,7 @@ def validate(model, test_dl, criterion, device):
         outputs = model(inputs)
         loss = criterion(outputs, label)
         global_loss += loss.item()
-        accuracy    += (round(float(F.softmax(outputs, dim=1)[0][0])) == label)
+        accuracy    += (round(float(F.softmax(outputs, dim=1)[0][0])) == float(label))
     
     global_loss /= len(test_dl)
     accuracy    /= len(test_dl)
