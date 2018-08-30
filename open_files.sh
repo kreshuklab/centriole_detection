@@ -14,4 +14,4 @@ echo export LC_CTYPE="en_US.UTF-8"
 echo tensorboard --logdir=models --port=6007
 echo
 echo To submit model:
-echo ./submit_job.py --model_name CNN_512_7conv_to4x4_3fc --lr 0.001 --id 01 
+echo ./submit_job.py --model_name MIL_32x32_to4x4 --lr 0.00001 --id right_norm --use_bags --epoch 1000 --save_best --save_each 50

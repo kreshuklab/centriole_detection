@@ -1,15 +1,8 @@
 import torch
+import torch.utils.data as data_utils
 
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-from torch.autograd import Variable
-
-import torchvision.datasets as dset
-import torchvision.transforms as transforms
+from torchvision import datasets, transforms
 from torch.utils.data import Dataset, DataLoader
-
-import torchvision.models as models
 
 import sys
 import math
@@ -94,7 +87,7 @@ class CentriollesDatasetOn(Dataset):
 class CentriollesDatasetPatients(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, nums=[397, 402, 403, 406, 396], main_dir='dataset/new_edition/in_png_normilized',
+    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/in_png_normilized',
                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=2048):
         self.samples = []
         self.classes = []
@@ -106,7 +99,7 @@ class CentriollesDatasetPatients(Dataset):
             if all_data:
                 return img_names
             if out_of == 1:
-                delimetr = int(0.6 * len(img_names))
+                delimetr = int(0.75 * len(img_names))
             else:
                 delimetr = int((fold + 1)/out_of * len(img_names))
             if train:
@@ -170,11 +163,20 @@ class CentriollesDatasetPatients(Dataset):
 ###############################################################################
 
 
-def image2bag(img, wsize=(28, 28), stride=0.5):
+def image2bag(img, wsize=(28, 28), stride=0.5, crop=False):
     bag=[]
     c, w, h = img.size()
+
+    ## ADD BLACK LIST 
+    ## TEST
+    if crop:
+        mask = get_the_central_cell_mask(img)
+
     for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
         for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
+            if crop:
+                if mask[:,cx:cx+wsize[0], cy:cy+wsize[1]].sum() == 0:
+                    continue
             cropped = img[:,cx:cx+wsize[0], cy:cy+wsize[1]]
             bag.append(cropped)
     return torch.stack(bag)
@@ -184,7 +186,7 @@ def image2bag(img, wsize=(28, 28), stride=0.5):
 class CentriollesDatasetBags(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, nums=[397, 402, 403, 406, 396], main_dir='dataset/new_edition/in_png_normilized',
+    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/in_png_normilized',
                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512, wsize=(28, 28), stride=0.5):
         self.samples = []
         self.classes = []
@@ -198,7 +200,7 @@ class CentriollesDatasetBags(Dataset):
             if all_data:
                 return img_names
             if out_of == 1:
-                delimetr = int(0.6 * len(img_names))
+                delimetr = int(0.75 * len(img_names))
             else:
                 delimetr = int((fold + 1)/out_of * len(img_names))
             if train:
@@ -260,12 +262,6 @@ class CentriollesDatasetBags(Dataset):
             positives[num] = positives[num] / total[num]
         return positives
 
-
-
-import numpy as np
-import torch
-import torch.utils.data as data_utils
-from torchvision import datasets, transforms
 
 
 class MnistBags(data_utils.Dataset):
