@@ -66,10 +66,9 @@ def get_the_central_cell_mask(img, gauss_ker_crop=21, bin_th=0.9*255, cl_ker=10,
 def get_basic_transforms():
     train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
                                     transforms.RandomHorizontalFlip(),
-                                    transforms.RandomApply(
-                                        [transforms.RandomAffine(degrees  =180,
-                                                                 translate=(0.1, 0.1),
-                                                                 scale    =(0.9, 1.0))]),
+                                    transforms.RandomAffine(degrees  =180,
+                                                            translate=(0.1, 0.1),
+                                                            scale    =(0.9, 1.0)),
                                     inftransforms.image.PILImage2NumPyArray(),
                                     #inftransforms.image.ElasticTransform(alpha=100, sigma=50),
                                     inftransforms.generic.Normalize(),

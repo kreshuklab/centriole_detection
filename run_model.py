@@ -35,9 +35,10 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
     parser.add_argument('--use_bags', action='store_true', help='For MIL models images should be represented as bag')
     parser.add_argument('--img_size', type=int, default=512, help='Size of input images')
+    parser.add_argument('--wsize', type=int, default=32, help='Size of windows for bagging')
     parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate')
     parser.add_argument('--wd', type=float, default=1e-6, help='Weight decay')
-    parser.add_argument('--ld', type=float, default=0.9, help='Learning rate multipliyer for every 10 epoches')
+    parser.add_argument('--ld', type=float, default=0.95, help='Learning rate multipliyer for every 10 epoches')
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
     parser.add_argument('--epoch', type=int, default=0, help='Number of epoches')
 
@@ -51,8 +52,8 @@ if __name__ == "__main__":
     # DATASETS INITIALIZATION
     train_tr, test_tr = get_basic_transforms()
     if args.use_bags:
-        train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size)
-        test_ds  = CentriollesDatasetBags(transform=test_tr, nums=[402, 403, 406, 396], inp_size=args.img_size, train=False)
+        train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size, wsize=(args.wsize, args.wsize))
+        test_ds  = CentriollesDatasetBags(transform=test_tr , nums=[402, 403, 406, 396], inp_size=args.img_size, wsize=(args.wsize, args.wsize), train=False)
         log_info('Bags dataset is used')
         #TODO: Average bag size
     else:

@@ -222,27 +222,28 @@ class DenseNet(nn.Module):
 ###############################################################################
 
 
-
-
-
-class AttentionMIL(nn.Module):
-    def __init__(self):
-        super(AttentionMIL, self).__init__()
+class CustomMIL(nn.Module):
+    def __init__(self, feature_extr=None, p2in=50*4*4, L=500, D=128, K=1):
+        super(CustomMIL, self).__init__()
         self.L = 500
         self.D = 128
         self.K = 1
+        self.p2in = 50 * 4 * 4
 
-        self.feature_extractor_part1 = nn.Sequential(
-            nn.Conv2d(1, 20, kernel_size=5),
-            nn.ReLU(),
-            nn.MaxPool2d(2, stride=2),
-            nn.Conv2d(20, 50, kernel_size=5),
-            nn.ReLU(),
-            nn.MaxPool2d(2, stride=2)
-        )
+        if feature_extr is not None:
+            self.feature_extractor_part1 = feature_extr()
+        else:
+            self.feature_extractor_part1 = nn.Sequential(
+                nn.Conv2d(1, 20, kernel_size=5),
+                nn.ReLU(),
+                nn.MaxPool2d(2, stride=2),
+                nn.Conv2d(20, 50, kernel_size=5),
+                nn.ReLU(),
+                nn.MaxPool2d(2, stride=2)
+            )
 
         self.feature_extractor_part2 = nn.Sequential(
-            nn.Linear(50 * 4 * 4, self.L),
+            nn.Linear(self.p2in, self.L),
             nn.ReLU(),
         )
 
