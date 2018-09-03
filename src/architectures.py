@@ -231,7 +231,7 @@ class CustomMIL(nn.Module):
         self.p2in = 50 * 4 * 4
 
         if feature_extr is not None:
-            self.feature_extractor_part1 = feature_extr()
+            self.feature_extractor_part1 = feature_extr
         else:
             self.feature_extractor_part1 = nn.Sequential(
                 nn.Conv2d(1, 20, kernel_size=5),

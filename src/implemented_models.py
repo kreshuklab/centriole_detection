@@ -22,20 +22,20 @@ MIL_32x32_to4x4 = CustomMIL()
 
 MIL_32x32_to4x4_k64 = CustomMIL(K=64)
 MIL_32x32_to4x4_k4 = CustomMIL(K=4)
-MIL_32x32_to4x4_k4 = CustomMIL(K=2)
+MIL_32x32_to4x4_k2 = CustomMIL(K=2)
 
 ## should work on 2048x2048
 MIL_f100_t2_dec = CustomMIL(feature_extr=CNN_MIL_f100x100_t2x2_dec,  p2in=128*2*2, L=500, D=128, K=1)
 MIL_f100_t2_inc = CustomMIL(feature_extr=CNN_MIL_f100x100_t2x2_inc,  p2in=128*2*2, L=500, D=128, K=1)
-MIL_f100_t2_dec = CustomMIL(feature_extr=CNN_MIL_f100x100_t10x10_dec,  p2in=64*10*10, L=500, D=128, K=1)
+MIL_f100_t10_dec = CustomMIL(feature_extr=CNN_MIL_f100x100_t10x10_dec,  p2in=64*10*10, L=500, D=128, K=1)
 
 MIL_f100_t2_dec_k4 = CustomMIL(feature_extr=CNN_MIL_f100x100_t2x2_dec,  p2in=128*2*2, L=500, D=128, K=2)
 MIL_f100_t2_inc_k4 = CustomMIL(feature_extr=CNN_MIL_f100x100_t2x2_inc,  p2in=128*2*2, L=500, D=128, K=2)
-MIL_f100_t2_dec_k4 = CustomMIL(feature_extr=CNN_MIL_f100x100_t10x10_dec,  p2in=64*10*10, L=500, D=128, K=2)
+MIL_f100_t10_dec_k4 = CustomMIL(feature_extr=CNN_MIL_f100x100_t10x10_dec,  p2in=64*10*10, L=500, D=128, K=2)
 
 MIL_f100_t2_dec_k4 = CustomMIL(feature_extr=CNN_MIL_f100x100_t2x2_dec,  p2in=128*2*2, L=500, D=128, K=4)
 MIL_f100_t2_inc_k4 = CustomMIL(feature_extr=CNN_MIL_f100x100_t2x2_inc,  p2in=128*2*2, L=500, D=128, K=4)
-MIL_f100_t2_dec_k4 = CustomMIL(feature_extr=CNN_MIL_f100x100_t10x10_dec,  p2in=64*10*10, L=500, D=128, K=4)
+MIL_f100_t10_dec_k4 = CustomMIL(feature_extr=CNN_MIL_f100x100_t10x10_dec,  p2in=64*10*10, L=500, D=128, K=4)
 
 
 #### DenseNets ####
