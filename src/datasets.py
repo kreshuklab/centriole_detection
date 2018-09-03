@@ -50,7 +50,7 @@ class CentriollesDatasetOn(Dataset):
             im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
             self.samples.append(im.copy())
             self.classes.append(1)
-            im.close
+            im.close()
             
         ## Negative samples
         for img_name in get_img_names(neg_dir):
@@ -122,7 +122,7 @@ class CentriollesDatasetPatients(Dataset):
                 self.samples.append(im.copy())
                 self.classes.append(1)
                 self.patient.append(num)
-                im.close
+                im.close()
 
             ## Negative samples
             for img_name in get_img_names(neg_dir):
@@ -223,7 +223,7 @@ class CentriollesDatasetBags(Dataset):
                 self.samples.append(im.copy())
                 self.classes.append(1)
                 self.patient.append(num)
-                im.close
+                im.close()
 
             ## Negative samples
             for img_name in get_img_names(neg_dir):
