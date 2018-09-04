@@ -55,7 +55,7 @@ if __name__ == "__main__":
     if args.use_bags:
         if args.test: 
             train_ds = MnistBags()
-            test_ds  = MnistBags()
+            test_ds  = MnistBags(train=False)
             log_info('Test bags dataset is used')
         else:
             train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size, wsize=(args.wsize, args.wsize))
@@ -72,18 +72,20 @@ if __name__ == "__main__":
             test_ds  = CentriollesDatasetPatients(transform=test_tr,  nums=[402, 403, 406, 396], inp_size=args.img_size, train=False)
             log_info('Patients dataset is used')  
 
+
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=3)
     test_dl  = DataLoader(test_ds,  batch_size=args.batch_size, shuffle=True, num_workers=3)
 
     log_info('Datasets are initialized!')
-    log_info('Train: size %d balance %f' % (len(train_ds), train_ds.class_balance()))
-    log_info('Test : size %d balance %f' % (len(test_ds ), test_ds.class_balance() ))
+    if not (args.use_bags and args.test):
+        log_info('Train: size %d balance %f' % (len(train_ds), train_ds.class_balance()))
+        log_info('Test : size %d balance %f' % (len(test_ds ), test_ds.class_balance() ))
 
-    if args.use_bags:
+    if args.use_bags and not args.test:
         bags_size = 0
-        for i  in range(max(5, len(train_ds))):
-            bags_size += train_ds[i].size()[0]
-        bags_size /= max(5, len(train_ds))
+        for i  in range(len(train_ds)):
+            bags_size += train_ds[i][0].size()[0]
+        bags_size /= len(train_ds)
         log_info('Mean bag size %f' % (bags_size))
 
     # MODEL INITIALIZATION

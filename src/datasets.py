@@ -279,7 +279,7 @@ class MnistBags(data_utils.Dataset):
 
     def _create_bags(self):
         if self.train:
-            loader = data_utils.DataLoader(datasets.MNIST('../datasets',
+            loader = data_utils.DataLoader(datasets.MNIST('datasets/MIL_test',
                                                           train=True,
                                                           download=True,
                                                           transform=transforms.Compose([
@@ -288,7 +288,7 @@ class MnistBags(data_utils.Dataset):
                                            batch_size=self.num_in_train,
                                            shuffle=False)
         else:
-            loader = data_utils.DataLoader(datasets.MNIST('../datasets',
+            loader = data_utils.DataLoader(datasets.MNIST('datasets/MIL_test',
                                                           train=False,
                                                           download=True,
                                                           transform=transforms.Compose([
@@ -336,47 +336,5 @@ class MnistBags(data_utils.Dataset):
             bag = self.test_bags_list[index]
             label = [max(self.test_labels_list[index]), self.test_labels_list[index]]
 
-        return bag, label
-
-
-if __name__ == "__main__":
-
-    train_loader = data_utils.DataLoader(MnistBags(target_number=9,
-                                                   mean_bag_length=10,
-                                                   var_bag_length=2,
-                                                   num_bag=100,
-                                                   seed=1,
-                                                   train=True),
-                                         batch_size=1,
-                                         shuffle=True)
-
-    test_loader = data_utils.DataLoader(MnistBags(target_number=9,
-                                                  mean_bag_length=10,
-                                                  var_bag_length=2,
-                                                  num_bag=100,
-                                                  seed=1,
-                                                  train=False),
-                                        batch_size=1,
-                                        shuffle=False)
-
-    len_bag_list_train = []
-    mnist_bags_train = 0
-    for batch_idx, (bag, label) in enumerate(train_loader):
-        len_bag_list_train.append(int(bag.squeeze(0).size()[0]))
-        mnist_bags_train += label[0].numpy()[0]
-    print('Number positive train bags: {}/{}\n'
-          'Number of instances per bag, mean: {}, max: {}, min {}\n'.format(
-        mnist_bags_train, len(train_loader),
-        np.mean(len_bag_list_train), np.min(len_bag_list_train), np.max(len_bag_list_train)))
-
-    len_bag_list_test = []
-    mnist_bags_test = 0
-    for batch_idx, (bag, label) in enumerate(test_loader):
-        len_bag_list_test.append(int(bag.squeeze(0).size()[0]))
-        mnist_bags_test += label[0].numpy()[0]
-    print('Number positive test bags: {}/{}\n'
-          'Number of instances per bag, mean: {}, max: {}, min {}\n'.format(
-        mnist_bags_test, len(test_loader),
-        np.mean(len_bag_list_test), np.min(len_bag_list_test), np.max(len_bag_list_test)))
-
+        return bag, label[0].long()
 
