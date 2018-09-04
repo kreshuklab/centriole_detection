@@ -215,15 +215,16 @@ class CentriollesDatasetBags(Dataset):
             pos_dir = os.path.join(main_dir, str(num) + '_centrioles')
             neg_dir = os.path.join(main_dir, str(num) + '_nocentrioles')
 
+            ## Positive samples
             for img_name in get_img_names(pos_dir):
                 img = get_img(os.path.join(pos_dir, img_name))
                 self.samples.append(img)
                 self.classes.append(1)
                 self.patient.append(num)
 
-            ## Negative samples
+            ## Negative sampless
             for img_name in get_img_names(neg_dir):
-                img = get_img(os.path.join(pos_dir, img_name))
+                img = get_img(os.path.join(neg_dir, img_name))
                 self.samples.append(img)
                 self.classes.append(0)
                 self.patient.append(num)

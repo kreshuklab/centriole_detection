@@ -2,6 +2,7 @@
 import sys
 
 #TORCH IMPORTS
+import torch
 import torchvision.transforms as transforms
 
 #INFERNO IMPORTS
