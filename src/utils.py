@@ -9,7 +9,32 @@ import inferno.io.transform as inftransforms
 
 
 
-def get_the_central_cell_mask(img, gauss_ker_crop=21, bin_th=0.9*255, cl_ker=10, fe_ker=30, se_ker=400, debug=1):
+def image2bag(inp, wsize=(28, 28), stride=0.5, crop=False):
+    bag=[]
+    if crop:
+        img, mask, rmask = inp
+    else:
+        img = inp
+
+    c, w, h = img.size()
+
+    for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
+        for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
+            if crop:
+                if mask[:,cx:cx+wsize[0], cy:cy+wsize[1]].sum() == 0:
+                    continue
+                if rmask[:,cx:cx+wsize[0], cy:cy+wsize[1]].sum() < wsize[0] * wsize[1]:
+                    continue
+            cropped = img[:,cx:cx+wsize[0], cy:cy+wsize[1]]
+            bag.append(cropped)
+
+    return torch.stack(bag)
+
+def get_the_central_cell_mask(pil_image, gauss_ker_crop=21, cl_ker=10, fe_ker=30, se_ker=400, debug=1):
+    img = numpy.array(pil_image) 
+    img = img[:, :, ::-1].copy() 
+    bin_th = 0.9 * img.mean() / img.max() * 255
+
     img = global_autoscale(img)
     h, w = img.shape
     img = cv2.GaussianBlur(img, (3, 3), 0)

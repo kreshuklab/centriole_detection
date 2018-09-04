@@ -6,7 +6,7 @@ import os
 import sys
 
 #INTERNAL IMPORTS
-from src.datasets import CentriollesDatasetPatients, CentriollesDatasetBags
+from src.datasets import CentriollesDatasetPatients, CentriollesDatasetBags, MnistBags
 from src.utils import get_basic_transforms, log_info
 from src.trainer import  train, validate
 import src.implemented_models as impl_models
@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser.add_argument('--ld', type=float, default=0.95, help='Learning rate multipliyer for every 10 epoches')
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
     parser.add_argument('--epoch', type=int, default=0, help='Number of epoches')
+    parser.add_argument('--test', action='store_true', help='Test this model on simpler dataset')
 
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
     parser.add_argument('--save_each', type=int, default=0, help='Save model weights each n epochs')
@@ -52,14 +53,24 @@ if __name__ == "__main__":
     # DATASETS INITIALIZATION
     train_tr, test_tr = get_basic_transforms()
     if args.use_bags:
-        train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size, wsize=(args.wsize, args.wsize))
-        test_ds  = CentriollesDatasetBags(transform=test_tr , nums=[402, 403, 406, 396], inp_size=args.img_size, wsize=(args.wsize, args.wsize), train=False)
-        log_info('Bags dataset is used')
-        #TODO: Average bag size
+        if args.test: 
+            train_ds = MnistBags()
+            test_ds  = MnistBags()
+            log_info('Test bags dataset is used')
+        else:
+            train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size, wsize=(args.wsize, args.wsize))
+            test_ds  = CentriollesDatasetBags(transform=test_tr , nums=[402, 403, 406, 396], inp_size=args.img_size, wsize=(args.wsize, args.wsize), train=False)
+            log_info('Bags dataset is used')
+            #TODO: Average bag size
     else:
-        train_ds = CentriollesDatasetPatients(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size)
-        test_ds  = CentriollesDatasetPatients(transform=test_tr,  nums=[402, 403, 406, 396], inp_size=args.img_size, train=False)
-        log_info('Patients dataset is used')  
+        if args.test:
+            train_ds = CentriollesDatasetOn(transform=train_tr, pos_dir='dataset/0_cifar_class', neg_dir='dataset/0_cifar_class', inp_size=args.img_size)
+            test_ds  = CentriollesDatasetOn(transform=test_tr , pos_dir='dataset/1_cifar_class', neg_dir='dataset/1_cifar_class', inp_size=args.img_size)
+            log_info('Test bags dataset is used')
+        else:
+            train_ds = CentriollesDatasetPatients(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size)
+            test_ds  = CentriollesDatasetPatients(transform=test_tr,  nums=[402, 403, 406, 396], inp_size=args.img_size, train=False)
+            log_info('Patients dataset is used')  
 
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=3)
     test_dl  = DataLoader(test_ds,  batch_size=args.batch_size, shuffle=True, num_workers=3)
@@ -67,6 +78,13 @@ if __name__ == "__main__":
     log_info('Datasets are initialized!')
     log_info('Train: size %d balance %f' % (len(train_ds), train_ds.class_balance()))
     log_info('Test : size %d balance %f' % (len(test_ds ), test_ds.class_balance() ))
+
+    if args.use_bags:
+        bags_size = 0
+        for i  in range(max(5, len(train_ds))):
+            bags_size += train_ds[i].size()[0]
+        bags_size /= max(5, len(train_ds))
+        log_info('Mean bag size %f' % (bags_size))
 
     # MODEL INITIALIZATION
     model_dir = os.path.join('models', args.model_name)
@@ -88,10 +106,10 @@ if __name__ == "__main__":
     if torch.cuda.is_available():
         log_info('Cuda will be used')
         device = torch.device("cuda:0")
-
     else:
         log_info('Cuda was not found, using CPU')
         device = torch.device("cpu")
+
     model.to(device)
     sys.stdout.flush()
 

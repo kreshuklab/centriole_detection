@@ -4,7 +4,7 @@
 PROJECT    = '_centrioles_detection'
 GROUP_NAME = 'kreshuk'
 EMAIL      = 'artem.lukoianov@embl.de'
-MEMORY     = 20
+MEMORY     = 40
 TIME_LIMIT = 10
 ID         = 'default'
 MAIL_TYPE  = 'FAIL'

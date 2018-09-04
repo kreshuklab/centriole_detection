@@ -4,6 +4,8 @@ import torch.utils.data as data_utils
 from torchvision import datasets, transforms
 from torch.utils.data import Dataset, DataLoader
 
+from src.utils import image2bag, get_the_central_cell_mask
+
 import sys
 import math
 import os
@@ -163,37 +165,34 @@ class CentriollesDatasetPatients(Dataset):
 ###############################################################################
 
 
-def image2bag(img, wsize=(28, 28), stride=0.5, crop=False):
-    bag=[]
-    c, w, h = img.size()
-
-    ## ADD BLACK LIST 
-    ## TEST
-    if crop:
-        mask = get_the_central_cell_mask(img)
-
-    for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
-        for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
-            if crop:
-                if mask[:,cx:cx+wsize[0], cy:cy+wsize[1]].sum() == 0:
-                    continue
-            cropped = img[:,cx:cx+wsize[0], cy:cy+wsize[1]]
-            bag.append(cropped)
-    return torch.stack(bag)
-
-
 
 class CentriollesDatasetBags(Dataset):
     """Centriolles dataset."""
 
     def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/in_png_normilized',
-                all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512, wsize=(32, 32), stride=0.5):
+                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512, wsize=(32, 32), stride=0.5, crop=False):
         self.samples = []
         self.classes = []
         self.patient = []
         self.transform = transform
         self.wsize = wsize 
         self.stride = stride
+        self.crop = crop
+
+        def get_img(img_name):
+            im = Image.open(img_name).convert('L')
+            im.load()
+            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
+
+            cp_img = im.copy()
+            im.close()
+
+            if crop:
+                mask = get_the_central_cell_mask(cp_img)
+                rot_mask = Image.new('L', (inp_size, inp_size), (1))
+                return Image.merge("RGB", [cp_img, mask, rot_mask])
+            else:
+                return cp_img
 
         def get_img_names(dir_name):
             img_names = [f for f in os.listdir(dir_name) if f.endswith('.png')]
@@ -217,23 +216,18 @@ class CentriollesDatasetBags(Dataset):
             neg_dir = os.path.join(main_dir, str(num) + '_nocentrioles')
 
             for img_name in get_img_names(pos_dir):
-                im = Image.open(os.path.join(pos_dir, img_name)).convert('L')
-                im.load()
-                im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
-                self.samples.append(im.copy())
+                img = get_img(os.path.join(pos_dir, img_name))
+                self.samples.append(img)
                 self.classes.append(1)
                 self.patient.append(num)
-                im.close()
 
             ## Negative samples
             for img_name in get_img_names(neg_dir):
-                im = Image.open(os.path.join(neg_dir, img_name)).convert('L')
-                im.load()
-                im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
-                self.samples.append(im.copy())
+                img = get_img(os.path.join(pos_dir, img_name))
+                self.samples.append(img)
                 self.classes.append(0)
                 self.patient.append(num)
-                im.close()
+
 
     def __len__(self):
         return len(self.samples)
@@ -243,6 +237,7 @@ class CentriollesDatasetBags(Dataset):
             images, labels = self.transform(self.samples[idx]), self.classes[idx]
         else:
             images, labels = self.samples[idx], self.classes[idx]
+
         images = image2bag(images.float(), wsize=self.wsize, stride=self.stride)
         return images, labels
 
