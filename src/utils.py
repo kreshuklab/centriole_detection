@@ -1,5 +1,8 @@
 #BASIC IMPORTS
 import sys
+import numpy as np
+from scipy import ndimage
+import cv2
 
 #TORCH IMPORTS
 import torch
@@ -9,35 +12,44 @@ import torchvision.transforms as transforms
 import inferno.io.transform as inftransforms
 
 
-
 def image2bag(inp, wsize=(28, 28), stride=0.5, crop=False):
     bag=[]
     if crop:
-        img, mask, rmask = inp
+        img, mask == inp[0], inp[1]
+        mask  = np.array(mask != mask.min())
     else:
         img = inp
 
-    c, w, h = img.size()
+    w, h = img.size()
+
+    #boxes = []
 
     for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
         for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
             if crop:
-                if mask[:,cx:cx+wsize[0], cy:cy+wsize[1]].sum() == 0:
+                if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
                     continue
-                if rmask[:,cx:cx+wsize[0], cy:cy+wsize[1]].sum() < wsize[0] * wsize[1]:
-                    continue
-            cropped = img[:,cx:cx+wsize[0], cy:cy+wsize[1]]
+            cropped = img[cx:cx+wsize[0], cy:cy+wsize[1]]
+            #boxes.append((cx, cy, wsize[0], wsize[1]))
             bag.append(cropped)
 
     return torch.stack(bag)
 
-def get_the_central_cell_mask(pil_image, gauss_ker_crop=21, cl_ker=10, fe_ker=30, se_ker=400, debug=1):
-    img = numpy.array(pil_image) 
-    img = img[:, :, ::-1].copy() 
+
+
+def local_autoscale(img):
+    return np.uint8((img - img.min()) / (img.max() - img.min()) * 255)
+
+
+
+def get_the_central_cell_mask(pil_image, wsize=32, gauss_ker_crop=21, cl_ker=0.02, fe_ker=0.06, debug=1):
+    img = np.array(pil_image)
     bin_th = 0.9 * img.mean() / img.max() * 255
 
-    img = global_autoscale(img)
     h, w = img.shape
+    cl_ker = int(cl_ker * (h + w) / 2)
+    fe_ker = int(fe_ker * (h + w) / 2)
+
     img = cv2.GaussianBlur(img, (3, 3), 0)
     
     blured = cv2.GaussianBlur(img, (gauss_ker_crop, gauss_ker_crop), 0)
@@ -52,9 +64,6 @@ def get_the_central_cell_mask(pil_image, gauss_ker_crop=21, cl_ker=10, fe_ker=30
     
     filled = cv2.morphologyEx(filled, cv2.MORPH_DILATE, fer_ker)
     
-    ser_ker = np.ones((se_ker, se_ker),np.uint8)
-    filled = cv2.morphologyEx(filled, cv2.MORPH_ERODE, ser_ker)
-    
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(filled, 4, cv2.CV_32S)       
     
     centr_num = -1
@@ -67,24 +76,23 @@ def get_the_central_cell_mask(pil_image, gauss_ker_crop=21, cl_ker=10, fe_ker=30
             continue
         if centr_num != -1:
             print('Error: Two centred cells!')
-            return img
+            #return img
         centr_num = i + 1
     
     if centr_num == -1:
-        print('Error: Could not find cell in da center')
-
-        return img
+        return np.ones((h, w), np.uint8)
     filtered_labels = (labels == centr_num).astype(np.uint8)
     
-    closed = cv2.morphologyEx(filtered_labels, cv2.MORPH_DILATE, ser_ker)
-    closed = cv2.morphologyEx(closed, cv2.MORPH_DILATE, fer_ker)
-    
-#     if debug:
-#         yield bins
-#         yield filled
-#         yield local_autoscale(labels)
-#         yield local_autoscale(img * closed)
-    #return img * closed
+    closed = filtered_labels
+    last_ker = np.ones((wsize, wsize),np.uint8)
+    closed = cv2.morphologyEx(closed, cv2.MORPH_DILATE, last_ker)
+
+    # if debug:
+    #     yield img
+    #     yield bins
+    #     yield filled
+    #     yield local_autoscale(labels)
+    #     yield local_autoscale(closed * img)
     return closed
 
 

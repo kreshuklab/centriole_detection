@@ -188,7 +188,7 @@ class CentriollesDatasetBags(Dataset):
             im.close()
 
             if crop:
-                mask = get_the_central_cell_mask(cp_img)
+                mask = Image.fromarray(get_the_central_cell_mask(cp_img, wsize=wsize[0]))
                 rot_mask = Image.new('L', (inp_size, inp_size), (1))
                 return Image.merge("RGB", [cp_img, mask, rot_mask])
             else:
@@ -239,7 +239,7 @@ class CentriollesDatasetBags(Dataset):
         else:
             images, labels = self.samples[idx], self.classes[idx]
 
-        images = image2bag(images.float(), wsize=self.wsize, stride=self.stride)
+        #images = image2bag(images.float(), wsize=self.wsize, stride=self.stride, crop=self.crop)
         return images, labels
 
     def class_balance(self):

@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
     parser.add_argument('--use_bags', action='store_true', help='For MIL models images should be represented as bag')
     parser.add_argument('--img_size', type=int, default=512, help='Size of input images')
-    parser.add_argument('--wsize', type=int, default=32, help='Size of windows for bagging')
+    parser.add_argument('--wsize', type=int, default=28, help='Size of windows for bagging')
     parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate')
     parser.add_argument('--wd', type=float, default=1e-6, help='Weight decay')
     parser.add_argument('--ld', type=float, default=0.95, help='Learning rate multipliyer for every 10 epoches')
