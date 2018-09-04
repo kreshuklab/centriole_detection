@@ -5,6 +5,7 @@
 ../rsub src/utils.py
 ../rsub src/architectures.py
 ../rsub src/implemented_models.py
+../rsub src/trainer.py
 
 echo
 echo To run tensorboard:
