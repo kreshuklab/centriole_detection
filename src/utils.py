@@ -33,7 +33,7 @@ def image2bag(inp, size=(28, 28), stride=0.5, crop=False, pyramid_layers=1):
                         continue
                 cropped = img[cx:cx+wsize[0], cy:cy+wsize[1]]
                 cropped = local_autoscale_ms(cropped)
-                cropped = F.interpolate(cropped[None, None, :, :], size=size, mode='bilinear', align_corners=True)[0]
+                cropped = F.upsample(cropped[None, None, :, :], size=size, mode='bilinear')[0]
                 boxes.append((cx, cy, wsize[0], wsize[1]))
                 bag.append(cropped)
 
