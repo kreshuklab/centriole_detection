@@ -61,10 +61,10 @@ if __name__ == "__main__":
             test_ds  = MnistBags(train=False)
             log_info('Test bags dataset is used')
         else:
-            train_ds = CentriollesDatasetBags(transform=train_tr, nums=[397], 
+            train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], 
                                                 inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
                                                 crop=args.crop, stride=args.stride, pyramid_layers=args.pyramid_layers)
-            test_ds  = CentriollesDatasetBags(transform=test_tr , nums=[397], 
+            test_ds  = CentriollesDatasetBags(transform=test_tr , nums=[402, 403, 406, 396], 
                                                 inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
                                                 crop=args.crop, stride=args.stride, train=False, 
                                                 pyramid_layers=args.pyramid_layers)

@@ -241,7 +241,7 @@ class CentriollesDatasetBags(Dataset):
         else:
             images, labels = self.samples[idx], self.classes[idx]
 
-        #images, _ = image2bag(images.float(), size=self.wsize, stride=self.stride, crop=self.crop, pyramid_layers=self.pyramid_layers)
+        images, _ = image2bag(images.float(), size=self.wsize, stride=self.stride, crop=self.crop, pyramid_layers=self.pyramid_layers)
         return images, labels
 
     def class_balance(self):
