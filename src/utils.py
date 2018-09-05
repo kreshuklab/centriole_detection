@@ -13,60 +13,51 @@ import torch.nn.functional as F
 import inferno.io.transform as inftransforms
 
 
-def image2bag(inp, wsize=(28, 28), stride=0.5, crop=False, pyramid_layers=1):
+def image2bag(inp, size=(28, 28), stride=0.5, crop=False, pyramid_layers=1):
     bag=[]
     if crop:
         img, mask = inp[0], inp[1]
         mask  = np.array(mask != mask.min())
     else:
         img = inp
-    boxes = []
 
-    count_down = pyramid_layers
-    while count_down > 0:
-        w, h = img.size()
+    w, h = img.size()
+    boxes = []
+    wsize = size
+
+    while pyramid_layers > 0:
         for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
             for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
                 if crop:
                     if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
                         continue
                 cropped = img[cx:cx+wsize[0], cy:cy+wsize[1]]
-                cropped = cropped[None, :, :]
+                cropped = local_autoscale_ms(cropped)
+                cropped = F.interpolate(cropped[None, None, :, :], size=size, mode='bilinear', align_corners=True)[0]
                 boxes.append((cx, cy, wsize[0], wsize[1]))
                 bag.append(cropped)
-        img = F.interpolate(img[None, None, :, :], scale_factor=0.7, mode='bilinear')[0][0]
-        if crop:
-            mask = cv2.resize(mask, dsize=(0, 0), fx=0.7, fy=0.7)
-        count_down -= 1
 
-    ## If bag is empty – repeat everything
-    if len(bag) == 0:
-        if crop:
-            img, mask = inp[0], inp[1]
-            mask  = np.array(mask != mask.min())
-        else:
-            img = inp
-
-        while pyramid_layers > 0:
-            w, h = img.size()
+        ## If bag is empty – repeat everything without cropping
+        if len(bag) == 0:
             for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
                 for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
                     cropped = img[cx:cx+wsize[0], cy:cy+wsize[1]]
-                    cropped = cropped[None, :, :]
+                    cropped = local_autoscale_ms(cropped)[None, :, :]
                     boxes.append((cx, cy, wsize[0], wsize[1]))
                     bag.append(cropped)
-        img = F.interpolate(img[None, None, :, :], scale_factor=0.7, mode='bilinear')[0][0]
-        if crop:
-            mask = cv2.resize(mask, dsize=(0, 0), fx=0.7, fy=0.7)
+                    
+        wsize = (int(1.4 * wsize[0]), int(1.4 * wsize[1]))
         pyramid_layers -= 1
-            
-
+    
     return torch.stack(bag), boxes
 
 
 
 def local_autoscale(img):
     return np.uint8((img - img.min()) / (img.max() - img.min()) * 255)
+
+def local_autoscale_ms(img):
+    return (img - img.mean()) / img.std()
 
 
 

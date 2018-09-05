@@ -20,11 +20,27 @@ import numpy as np
 from src.utils import num_flat_features
 
 
+##################
+#  GENERATPORS   #
+##################
+
+def get_cnn(filters=[512]):
+    prev = 1
+
+    model = []
+
+    for fil in filters:
+        model.append(nn.Conv2d(prev, fil, 3))
+        model.append(nn.ReLU())
+        model.append(nn.MaxPool2d(2))
+        prev = fil
+
+    return nn.Sequential(*model)
+
 
 #############
 #  LAYERS   #
 #############
-
 
 class View(nn.Module):
     def __init__(self):
@@ -228,7 +244,7 @@ class CustomMIL(nn.Module):
         self.L = 500
         self.D = 128
         self.K = 1
-        self.p2in = 50 * 4 * 4
+        self.p2in = p2in
 
         if feature_extr is not None:
             self.feature_extractor_part1 = feature_extr
@@ -245,6 +261,10 @@ class CustomMIL(nn.Module):
         self.feature_extractor_part2 = nn.Sequential(
             nn.Linear(self.p2in, self.L),
             nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(self.L, self.L),
+            nn.ReLU(),
+            nn.Dropout()
         )
 
         self.attention = nn.Sequential(
@@ -262,7 +282,7 @@ class CustomMIL(nn.Module):
         x = x.squeeze(0)
 
         H = self.feature_extractor_part1(x)
-        H = H.view(-1, 50 * 4 * 4)
+        H = H.view(-1, self.p2in)
         H = self.feature_extractor_part2(H)  # NxL
 
         A = self.attention(H)  # NxK
