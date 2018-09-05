@@ -15,7 +15,7 @@ import inferno.io.transform as inftransforms
 def image2bag(inp, wsize=(28, 28), stride=0.5, crop=False):
     bag=[]
     if crop:
-        img, mask == inp[0], inp[1]
+        img, mask = inp[0], inp[1]
         mask  = np.array(mask != mask.min())
     else:
         img = inp
