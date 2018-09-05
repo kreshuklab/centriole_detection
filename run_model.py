@@ -44,6 +44,7 @@ if __name__ == "__main__":
     parser.add_argument('--test', action='store_true', help='Test this model on simpler dataset')
     parser.add_argument('--crop', action='store_true', help='Crop only the central cell')
     parser.add_argument('--stride', type=float, default=0.5, help='From 0 to 1')
+    parser.add_argument('--pyramid_layers', type=int, default=28, help='Number of layers in da pyramid')
 
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
     parser.add_argument('--save_each', type=int, default=0, help='Save model weights each n epochs')
@@ -60,10 +61,13 @@ if __name__ == "__main__":
             test_ds  = MnistBags(train=False)
             log_info('Test bags dataset is used')
         else:
-            train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size, 
-                                                wsize=(args.wsize, args.wsize), crop=args.crop, stride=args.stride)
-            test_ds  = CentriollesDatasetBags(transform=test_tr , nums=[402, 403, 406, 396], inp_size=args.img_size, 
-                                                wsize=(args.wsize, args.wsize), crop=args.crop, stride=args.stride, train=False)
+            train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], 
+                                                inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
+                                                crop=args.crop, stride=args.stride, pyramid_layers=args.pyramid_layers)
+            test_ds  = CentriollesDatasetBags(transform=test_tr , nums=[402, 403, 406, 396], 
+                                                inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
+                                                crop=args.crop, stride=args.stride, train=False, 
+                                                pyramid_layers=args.pyramid_layers)
             log_info('Bags dataset is used')
             #TODO: Average bag size
     else:
@@ -77,8 +81,8 @@ if __name__ == "__main__":
             log_info('Patients dataset is used')  
 
 
-    train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=3)
-    test_dl  = DataLoader(test_ds,  batch_size=args.batch_size, shuffle=True, num_workers=3)
+    train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=0)
+    test_dl  = DataLoader(test_ds,  batch_size=args.batch_size, shuffle=True, num_workers=0)
 
     log_info('Datasets are initialized!')
     if not (args.use_bags and args.test):

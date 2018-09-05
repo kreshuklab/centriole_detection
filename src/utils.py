@@ -7,42 +7,61 @@ import cv2
 #TORCH IMPORTS
 import torch
 import torchvision.transforms as transforms
+import torch.nn.functional as F
 
 #INFERNO IMPORTS
 import inferno.io.transform as inftransforms
 
 
-def image2bag(inp, wsize=(28, 28), stride=0.5, crop=False):
+def image2bag(inp, wsize=(28, 28), stride=0.5, crop=False, pyramid_layers=1):
     bag=[]
     if crop:
         img, mask = inp[0], inp[1]
         mask  = np.array(mask != mask.min())
     else:
         img = inp
+    boxes = []
 
-    w, h = img.size()
-
-    #boxes = []
-
-    for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
-        for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
-            if crop:
-                if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
-                    continue
-            cropped = img[cx:cx+wsize[0], cy:cy+wsize[1]]
-            cropped = cropped[None, :, :]
-            #boxes.append((cx, cy, wsize[0], wsize[1]))
-            bag.append(cropped)
-
-    if len(bag) == 0:
+    count_down = pyramid_layers
+    while count_down > 0:
+        w, h = img.size()
         for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
             for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
+                if crop:
+                    if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
+                        continue
                 cropped = img[cx:cx+wsize[0], cy:cy+wsize[1]]
                 cropped = cropped[None, :, :]
-                #boxes.append((cx, cy, wsize[0], wsize[1]))
+                boxes.append((cx, cy, wsize[0], wsize[1]))
                 bag.append(cropped)
+        img = F.interpolate(img[None, None, :, :], scale_factor=0.7, mode='bilinear')[0][0]
+        if crop:
+            mask = cv2.resize(mask, dsize=(0, 0), fx=0.7, fy=0.7)
+        count_down -= 1
 
-    return torch.stack(bag)
+    ## If bag is empty – repeat everything
+    if len(bag) == 0:
+        if crop:
+            img, mask = inp[0], inp[1]
+            mask  = np.array(mask != mask.min())
+        else:
+            img = inp
+
+        while pyramid_layers > 0:
+            w, h = img.size()
+            for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
+                for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
+                    cropped = img[cx:cx+wsize[0], cy:cy+wsize[1]]
+                    cropped = cropped[None, :, :]
+                    boxes.append((cx, cy, wsize[0], wsize[1]))
+                    bag.append(cropped)
+        img = F.interpolate(img[None, None, :, :], scale_factor=0.7, mode='bilinear')[0][0]
+        if crop:
+            mask = cv2.resize(mask, dsize=(0, 0), fx=0.7, fy=0.7)
+        pyramid_layers -= 1
+            
+
+    return torch.stack(bag), boxes
 
 
 

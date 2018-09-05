@@ -170,7 +170,8 @@ class CentriollesDatasetBags(Dataset):
     """Centriolles dataset."""
 
     def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/in_png_normilized',
-                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512, wsize=(32, 32), stride=0.5, crop=False):
+                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512, wsize=(32, 32), 
+                 stride=0.5, crop=False, pyramid_layers=1):
         self.samples = []
         self.classes = []
         self.patient = []
@@ -178,6 +179,7 @@ class CentriollesDatasetBags(Dataset):
         self.wsize = wsize 
         self.stride = stride
         self.crop = crop
+        self.pyramid_layers = pyramid_layers
 
         def get_img(img_name):
             im = Image.open(img_name).convert('L')
@@ -239,7 +241,7 @@ class CentriollesDatasetBags(Dataset):
         else:
             images, labels = self.samples[idx], self.classes[idx]
 
-        images = image2bag(images.float(), wsize=self.wsize, stride=self.stride, crop=self.crop)
+        images, _ = image2bag(images.float(), wsize=self.wsize, stride=self.stride, crop=self.crop, pyramid_layers=self.pyramid_layers)
         return images, labels
 
     def class_balance(self):
@@ -280,7 +282,7 @@ class MnistBags(data_utils.Dataset):
 
     def _create_bags(self):
         if self.train:
-            loader = data_utils.DataLoader(datasets.MNIST('datasets/MIL_test',
+            loader = data_utils.DataLoader(datasets.MNIST('dataset/MIL_test',
                                                           train=True,
                                                           download=True,
                                                           transform=transforms.Compose([
@@ -289,7 +291,7 @@ class MnistBags(data_utils.Dataset):
                                            batch_size=self.num_in_train,
                                            shuffle=False)
         else:
-            loader = data_utils.DataLoader(datasets.MNIST('datasets/MIL_test',
+            loader = data_utils.DataLoader(datasets.MNIST('dataset/MIL_test',
                                                           train=False,
                                                           download=True,
                                                           transform=transforms.Compose([
