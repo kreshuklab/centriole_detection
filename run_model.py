@@ -42,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
     parser.add_argument('--epoch', type=int, default=0, help='Number of epoches')
     parser.add_argument('--test', action='store_true', help='Test this model on simpler dataset')
-    parser.add_argument('--crop', action='store_true', help='Crop only central cell')
+    parser.add_argument('--crop', action='store_true', help='Crop only the central cell')
     parser.add_argument('--stride', type=float, default=0.5, help='From 0 to 1')
 
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')

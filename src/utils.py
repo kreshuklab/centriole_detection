@@ -30,8 +30,17 @@ def image2bag(inp, wsize=(28, 28), stride=0.5, crop=False):
                 if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
                     continue
             cropped = img[cx:cx+wsize[0], cy:cy+wsize[1]]
+            cropped = cropped[None, :, :]
             #boxes.append((cx, cy, wsize[0], wsize[1]))
             bag.append(cropped)
+
+    if len(bag) == 0:
+        for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
+            for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
+                cropped = img[cx:cx+wsize[0], cy:cy+wsize[1]]
+                cropped = cropped[None, :, :]
+                #boxes.append((cx, cy, wsize[0], wsize[1]))
+                bag.append(cropped)
 
     return torch.stack(bag)
 
