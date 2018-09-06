@@ -18,10 +18,11 @@ def image2bag(inp, size=(28, 28), stride=0.5, crop=False, pyramid_layers=1):
     if crop:
         img, mask = inp[0], inp[1]
         mask  = np.array(mask != mask.min())
+        w, h = img.size()
     else:
         img = inp
+        c, w, h = img.size()
 
-    w, h = img.size()
     boxes = []
     wsize = size
 
