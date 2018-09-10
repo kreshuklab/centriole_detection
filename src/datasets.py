@@ -263,7 +263,7 @@ class CentriollesDatasetBags(Dataset):
 
 
 class MnistBags(data_utils.Dataset):
-    def __init__(self, target_number=9, mean_bag_length=10, var_bag_length=2, num_bag=250, seed=1, train=True):
+    def __init__(self, target_number=9, mean_bag_length=10, var_bag_length=2, num_bag=250, seed=1, train=True, wsize=(28, 28),):
         self.target_number = target_number
         self.mean_bag_length = mean_bag_length
         self.var_bag_length = var_bag_length
@@ -271,6 +271,7 @@ class MnistBags(data_utils.Dataset):
         self.train = train
 
         self.r = np.random.RandomState(seed)
+        self.wsize = wsize
 
         self.num_in_train = 60000
         self.num_in_test = 10000
@@ -286,6 +287,7 @@ class MnistBags(data_utils.Dataset):
                                                           train=True,
                                                           download=True,
                                                           transform=transforms.Compose([
+                                                              transforms.Resize(self.wsize),
                                                               transforms.ToTensor(),
                                                               transforms.Normalize((0.1307,), (0.3081,))])),
                                            batch_size=self.num_in_train,
@@ -295,6 +297,7 @@ class MnistBags(data_utils.Dataset):
                                                           train=False,
                                                           download=True,
                                                           transform=transforms.Compose([
+                                                              transforms.Resize(self.wsize),
                                                               transforms.ToTensor(),
                                                               transforms.Normalize((0.1307,), (0.3081,))])),
                                            batch_size=self.num_in_test,

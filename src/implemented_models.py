@@ -9,6 +9,9 @@ MIL_32x32_to4x4 = CustomMIL()
 MIL_48x48_to4x4_cst = CustomMIL(feature_extr=get_cnn(filters=[512, 512, 512]),  p2in=512*4*4, L=500, D=128, K=1)
 MIL_48x48_to4x4_dec = CustomMIL(feature_extr=get_cnn(filters=[512, 256, 128]),  p2in=128*4*4, L=500, D=128, K=1)
 MIL_48x48_to4x4_inc = CustomMIL(feature_extr=get_cnn(filters=[128, 256, 512]),  p2in=512*4*4, L=500, D=128, K=1)
+MIL_48x48_to4x4_small = CustomMIL(feature_extr=get_cnn(filters=[128, 64, 32]),  p2in=32*4*4, L=500, D=128, K=1)
+MIL_48x48_to4x4_small_drop0 = CustomMIL(feature_extr=get_cnn(filters=[128, 64, 32]),  p2in=32*4*4, L=500, D=128, K=1, dropp=0)
+MIL_48x48_to4x4_small_drop2 = CustomMIL(feature_extr=get_cnn(filters=[128, 64, 32]),  p2in=32*4*4, L=500, D=128, K=1, dropp=0.2)
 
 #### DenseNets ####
 DenseNet_BN_32k_to7x7_ap_3fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 100])

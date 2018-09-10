@@ -236,7 +236,7 @@ class DenseNet(nn.Module):
 
 
 class CustomMIL(nn.Module):
-    def __init__(self, feature_extr=None, p2in=50*4*4, L=500, D=128, K=1):
+    def __init__(self, feature_extr=None, p2in=50*4*4, L=500, D=128, K=1, dropp=0.5):
         super(CustomMIL, self).__init__()
         self.L = 500
         self.D = 128
@@ -258,10 +258,10 @@ class CustomMIL(nn.Module):
         self.feature_extractor_part2 = nn.Sequential(
             nn.Linear(self.p2in, self.L),
             nn.ReLU(),
-            nn.Dropout(),
+            nn.Dropout(dropp),
             nn.Linear(self.L, self.L),
             nn.ReLU(),
-            nn.Dropout()
+            nn.Dropout(dropp)
         )
 
         self.attention = nn.Sequential(

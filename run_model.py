@@ -57,8 +57,8 @@ if __name__ == "__main__":
     train_tr, test_tr = get_basic_transforms()
     if args.use_bags:
         if args.test: 
-            train_ds = MnistBags()
-            test_ds  = MnistBags(train=False)
+            train_ds = MnistBags(wsize=(args.wsize, args.wsize))
+            test_ds  = MnistBags(wsize=(args.wsize, args.wsize), train=False)
             log_info('Test bags dataset is used')
         else:
             train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], 
