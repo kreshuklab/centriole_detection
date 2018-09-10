@@ -3,6 +3,7 @@
 #BASIC IMPORTS
 import argparse
 import os
+import subprocess
 import sys
 
 #INTERNAL IMPORTS
@@ -52,6 +53,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     log_info( 'Params: ' + str(args))
+    log_info('GIT revision: ' + subprocess.check_output('git rev-parse HEAD', shell=True).decode("utf-8"))
 
     # DATASETS INITIALIZATION
     train_tr, test_tr = get_basic_transforms()
@@ -70,6 +72,7 @@ if __name__ == "__main__":
                                                 pyramid_layers=args.pyramid_layers)
             log_info('Bags dataset is used')
             #TODO: Average bag size
+
     else:
         if args.test:
             train_ds = CentriollesDatasetOn(transform=train_tr, pos_dir='dataset/0_cifar_class', neg_dir='dataset/0_cifar_class', inp_size=args.img_size)
