@@ -63,10 +63,10 @@ if __name__ == "__main__":
             test_ds  = MnistBags(wsize=(args.wsize, args.wsize), train=False)
             log_info('Test bags dataset is used')
         else:
-            train_ds = CentriollesDatasetBags(transform=train_tr, nums=[402, 403, 406, 396], 
+            train_ds = CentriollesDatasetBags(transform=train_tr, 
                                                 inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
                                                 crop=args.crop, stride=args.stride, pyramid_layers=args.pyramid_layers)
-            test_ds  = CentriollesDatasetBags(transform=test_tr , nums=[402, 403, 406, 396], 
+            test_ds  = CentriollesDatasetBags(transform=test_tr, 
                                                 inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
                                                 crop=args.crop, stride=args.stride, train=False, 
                                                 pyramid_layers=args.pyramid_layers)
@@ -79,8 +79,8 @@ if __name__ == "__main__":
             test_ds  = CentriollesDatasetOn(transform=test_tr , pos_dir='dataset/1_cifar_class', neg_dir='dataset/1_cifar_class', inp_size=args.img_size)
             log_info('Test bags dataset is used')
         else:
-            train_ds = CentriollesDatasetPatients(transform=train_tr, nums=[402, 403, 406, 396], inp_size=args.img_size)
-            test_ds  = CentriollesDatasetPatients(transform=test_tr,  nums=[402, 403, 406, 396], inp_size=args.img_size, train=False)
+            train_ds = CentriollesDatasetPatients(transform=train_tr, inp_size=args.img_size)
+            test_ds  = CentriollesDatasetPatients(transform=test_tr, inp_size=args.img_size, train=False)
             log_info('Patients dataset is used')  
 
 

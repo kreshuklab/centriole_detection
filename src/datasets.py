@@ -89,7 +89,7 @@ class CentriollesDatasetOn(Dataset):
 class CentriollesDatasetPatients(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/in_png_normilized',
+    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/filtered',
                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=2048):
         self.samples = []
         self.classes = []
@@ -169,13 +169,14 @@ class CentriollesDatasetPatients(Dataset):
 class CentriollesDatasetBags(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/in_png_normilized',
+    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/filtered',
                  all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512, wsize=(32, 32), 
                  stride=0.5, crop=False, pyramid_layers=1):
         self.samples = []
         self.classes = []
         self.patient = []
         self.transform = transform
+        self.name = []
         self.wsize = wsize 
         self.stride = stride
         self.crop = crop
@@ -219,14 +220,16 @@ class CentriollesDatasetBags(Dataset):
 
             ## Positive samples
             for img_name in get_img_names(pos_dir):
-                img = get_img(os.path.join(pos_dir, img_name))
+                self.name.append(os.path.join(pos_dir, img_name))
+                img = get_img(self.name[-1])
                 self.samples.append(img)
                 self.classes.append(1)
                 self.patient.append(num)
 
             ## Negative sampless
             for img_name in get_img_names(neg_dir):
-                img = get_img(os.path.join(neg_dir, img_name))
+                self.name.append(os.path.join(neg_dir, img_name))
+                img = get_img(self.name[-1])
                 self.samples.append(img)
                 self.classes.append(0)
                 self.patient.append(num)
