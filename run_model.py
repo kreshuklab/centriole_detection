@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     log_info( 'Params: ' + str(args))
-    log_info('GIT revision: ' + subprocess.check_output('git rev-parse HEAD', shell=True).decode("utf-8"))
+    #log_info('GIT revision: ' + subprocess.check_output('git rev-parse HEAD', shell=True).decode("utf-8"))
 
     # DATASETS INITIALIZATION
     train_tr, test_tr = get_basic_transforms()
