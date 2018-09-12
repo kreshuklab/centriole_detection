@@ -258,10 +258,10 @@ class CustomMIL(nn.Module):
         self.feature_extractor_part2 = nn.Sequential(
             nn.Linear(self.p2in, self.L),
             nn.ReLU(),
-            nn.Dropout(dropp),
+            #nn.Dropout(dropp),
             nn.Linear(self.L, self.L),
             nn.ReLU(),
-            nn.Dropout(dropp)
+            #nn.Dropout(dropp)
         )
 
         self.attention = nn.Sequential(

@@ -146,13 +146,60 @@ if __name__ == "__main__":
     best_loss  = 1e5
     while True:
         log_info('Epoch %d satrted' %(epoch_num))
-        loss = train(model, train_dl, criterion, optimizer, device)
+
+        ###########
+        ## TRAIN ##
+        ###########
+
+        model.train()
+        criterion.train()
+
+        global_loss = 0.0
+    
+        for inputs, label in train_dl:
+            inputs, label = inputs.to(device), label.to(device)
+
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, label)
+            loss.backward()
+            optimizer.step()
+            
+            global_loss += loss.item()
+        
+        global_loss /= len(train_dl)
+        loss = global_loss
         writer.add_scalar('train_loss', loss, epoch_num)
         writer.add_scalar('learning_rate', float(scheduler.get_lr()[0]), epoch_num)
         
-        loss, acc = validate(model, test_dl, criterion, device)
+        ################
+        ## VAlIDATION ##
+        ################
+
+        model.eval()
+        criterion.eval()
+
+        global_loss = 0.0
+        accuracy    = 0.0 
+        
+        for inputs, label in test_dl:
+            inputs, label = inputs.to(device), label.to(device)
+
+            outputs = model(inputs)
+            loss = criterion(outputs, label)
+            global_loss += loss.item()
+            accuracy    += (round(float(F.softmax(outputs, dim=1)[0][0])) == float(label))
+        
+        global_loss /= len(test_dl)
+        accuracy    /= len(test_dl)
+
+        loss, acc = global_loss, accuracy
         writer.add_scalar('test_loss', loss, epoch_num)
         writer.add_scalar('test_accuracy', acc, epoch_num)
+
+        ################
+        ## SAVE&CHECK ##
+        ################
 
         if args.epoch != 0 and epoch_num >= args.epoch:
             log_info('Max number of epochs is exceeded. Training is finished!')
