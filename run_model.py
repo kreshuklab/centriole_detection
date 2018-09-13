@@ -17,6 +17,7 @@ import torch
 import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
+import torch.nn.functional as F
 
 #INFERNO IMPORTS
 from inferno.trainers.basic import Trainer
