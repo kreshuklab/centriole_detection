@@ -1,11 +1,71 @@
 #BASIC IMPORTS
 import sys
+import numpy as np
+from scipy import ndimage
+import cv2
 
 #TORCH IMPORTS
+import torch
 import torchvision.transforms as transforms
+import torch.nn.functional as F
 
 #INFERNO IMPORTS
 import inferno.io.transform as inftransforms
+
+
+def get_the_central_cell_mask(pil_image, wsize=32, gauss_ker_crop=21, cl_ker=0.02, fe_ker=0.06, debug=1):
+    img = np.array(pil_image)
+    bin_th = 0.9 * img.mean() / img.max() * 255
+
+    h, w = img.shape
+    cl_ker = int(cl_ker * (h + w) / 2)
+    fe_ker = int(fe_ker * (h + w) / 2)
+
+    img = cv2.GaussianBlur(img, (3, 3), 0)
+    
+    blured = cv2.GaussianBlur(img, (gauss_ker_crop, gauss_ker_crop), 0)
+    ret, bins = cv2.threshold(blured, bin_th, 255, cv2.THRESH_BINARY_INV)
+    
+    close_ker = np.ones((cl_ker, cl_ker),np.uint8)
+    bins = cv2.morphologyEx(bins, cv2.MORPH_CLOSE, close_ker)
+    fer_ker = np.ones((fe_ker, fe_ker),np.uint8)
+    bins = cv2.morphologyEx(bins, cv2.MORPH_ERODE, fer_ker)
+    
+    filled = ndimage.binary_fill_holes(bins).astype(np.uint8) * 255
+    
+    filled = cv2.morphologyEx(filled, cv2.MORPH_DILATE, fer_ker)
+    
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(filled, 4, cv2.CV_32S)       
+    
+    centr_num = -1
+    for i in range(len(stats[1:])):
+        cx, cy, cw, ch, ca = stats[i + 1]
+        cenx = cx + cw / 2
+        ceny = cy + ch / 2
+        if h/2 < cx or h/2 > cx + cw or \
+           w/2 < cy or w/2 > cy + ch:
+            continue
+        if centr_num != -1:
+            print('Error: Two centred cells!')
+            #return img
+        centr_num = i + 1
+    
+    if centr_num == -1:
+        return np.ones((h, w), np.uint8)
+    filtered_labels = (labels == centr_num).astype(np.uint8)
+    
+    closed = filtered_labels
+    last_ker = np.ones((wsize, wsize),np.uint8)
+    closed = cv2.morphologyEx(closed, cv2.MORPH_DILATE, last_ker)
+
+    # if debug:
+    #     yield img
+    #     yield bins
+    #     yield filled
+    #     yield local_autoscale(labels)
+    #     yield local_autoscale(closed * img)
+    return closed
+    
 
 def get_basic_transforms():
     train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
