@@ -13,7 +13,7 @@ import torch.nn.functional as F
 import inferno.io.transform as inftransforms
 
 
-def get_the_central_cell_mask(pil_image, wsize=32, gauss_ker_crop=21, cl_ker=0.02, fe_ker=0.06, debug=1):
+def get_the_central_cell_mask(pil_image, wsize=28, gauss_ker_crop=21, cl_ker=0.02, fe_ker=0.06, debug=1):
     img = np.array(pil_image)
     bin_th = 0.9 * img.mean() / img.max() * 255
 
@@ -76,12 +76,10 @@ def get_basic_transforms():
                                                                  scale    =(0.9, 1.0),
                                                                  shear    =10)]),
                                     inftransforms.image.PILImage2NumPyArray(),
-                                    inftransforms.image.ElasticTransform(alpha=100, sigma=50),
-                                    inftransforms.generic.NormalizeRange(normalize_by=255.0),
+                                    #inftransforms.image.ElasticTransform(alpha=100, sigma=50),
                                     inftransforms.generic.AsTorchBatch(dimensionality=2)])
 
     test_tr  = transforms.Compose([ inftransforms.image.PILImage2NumPyArray(),
-                                    inftransforms.generic.NormalizeRange(normalize_by=255.0),
                                     inftransforms.generic.AsTorchBatch(dimensionality=2)])
     return train_tr, test_tr
 
