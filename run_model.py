@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 #INTERNAL IMPORTS
-from src.datasets import CentriollesDatasetPatients, CentriollesDatasetBags, MnistBags
+from src.datasets import CentriollesDatasetPatients, CentriollesDatasetBags, MnistBags, GENdataset
 from src.utils import get_basic_transforms, log_info
 from src.trainer import  train, validate
 import src.implemented_models as impl_models
@@ -44,6 +44,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
     parser.add_argument('--epoch', type=int, default=0, help='Number of epoches')
     parser.add_argument('--test', action='store_true', help='Test this model on simpler dataset')
+    parser.add_argument('--artif', action='store_true', help='Artificial dataset')
     parser.add_argument('--crop', action='store_true', help='Crop only the central cell')
     parser.add_argument('--stride', type=float, default=0.5, help='From 0 to 1')
     parser.add_argument('--pyramid_layers', type=int, default=28, help='Number of layers in da pyramid')
@@ -59,7 +60,20 @@ if __name__ == "__main__":
     # DATASETS INITIALIZATION
     train_tr, test_tr = get_basic_transforms()
     if args.use_bags:
-        if args.test: 
+        if args.artif:
+            train_ds = GENdataset(transform=train_tr, 
+                                                inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
+                                                crop=args.crop, stride=args.stride, pyramid_layers=args.pyramid_layers)
+            test_ds  = GENdataset(transform=test_tr, 
+                                                inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
+                                                crop=args.crop, stride=args.stride, train=False, 
+                                                pyramid_layers=args.pyramid_layers)
+            real_test_ds  = CentriollesDatasetBags(transform=test_tr, 
+                                                inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
+                                                crop=args.crop, stride=args.stride, train=False, 
+                                                pyramid_layers=args.pyramid_layers)
+            log_info('Artificial dataset is used')
+        elif args.test: 
             train_ds = MnistBags(wsize=(args.wsize, args.wsize))
             test_ds  = MnistBags(wsize=(args.wsize, args.wsize), train=False)
             log_info('Test bags dataset is used')
@@ -87,6 +101,8 @@ if __name__ == "__main__":
 
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=0)
     test_dl  = DataLoader(test_ds,  batch_size=args.batch_size, shuffle=True, num_workers=0)
+    if args.artif:
+        real_test_dl = DataLoader(real_test_ds, batch_size=args.batch_size, shuffle=True, num_workers=0)
 
     log_info('Datasets are initialized!')
     if not (args.use_bags and args.test):
@@ -197,6 +213,31 @@ if __name__ == "__main__":
         loss, acc = global_loss, accuracy
         writer.add_scalar('test_loss', loss, epoch_num)
         writer.add_scalar('test_accuracy', acc, epoch_num)
+
+        ################
+        ## VAlIDATION  FOR ART##
+        ################
+        if args.artif:
+            model.eval()
+            criterion.eval()
+
+            global_loss = 0.0
+            accuracy    = 0.0 
+            
+            for inputs, label in real_test_dl:
+                inputs, label = inputs.to(device), label.to(device)
+
+                outputs = model(inputs)
+                loss = criterion(outputs, label)
+                global_loss += loss.item()
+                accuracy    += (round(float(F.softmax(outputs, dim=1)[0][0])) == float(label))
+            
+            global_loss /= len(test_dl)
+            accuracy    /= len(test_dl)
+
+            loss, acc = global_loss, accuracy
+            writer.add_scalar('real_test_loss', loss, epoch_num)
+            writer.add_scalar('real_test_err', acc, epoch_num)
 
         ################
         ## SAVE&CHECK ##

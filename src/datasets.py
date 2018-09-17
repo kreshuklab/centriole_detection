@@ -5,6 +5,8 @@ from torchvision import datasets, transforms
 from torch.utils.data import Dataset, DataLoader
 
 from src.utils import image2bag, get_the_central_cell_mask
+from src.utils import get_centriolle, add_projection, get_random_projection
+from src.utils import show_2d_slice
 
 import sys
 import math
@@ -163,7 +165,6 @@ class CentriollesDatasetPatients(Dataset):
 ###############################################################################
 ###                             NEW CLASS                                   ###
 ###############################################################################
-
 
 
 class CentriollesDatasetBags(Dataset):
@@ -347,3 +348,100 @@ class MnistBags(data_utils.Dataset):
 
         return bag, label[0].long()
 
+
+###############################################################################
+###                             NEW CLASS                                   ###
+###############################################################################
+
+
+class GENdataset(Dataset):
+    """Centriolles dataset."""
+
+    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], 
+                 main_dir='../centrioles/dataset/new_edition/filtered',
+                 train=True, all_data=False, transform=None, inp_size=512, wsize=(32, 32), 
+                 stride=0.5, crop=False, pyramid_layers=1):
+        self.samples = []
+        self.patient = []
+        self.inp_size = inp_size
+        self.transform = transform
+        self.name = []
+        self.wsize = wsize 
+        self.stride = stride
+        self.crop = crop
+        self.pyramid_layers = pyramid_layers
+        self.centriolle = get_centriolle()
+
+        def get_img(img_name):
+            im = Image.open(img_name).convert('L')
+            im.load()
+            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
+
+            cp_img = im.copy()
+            im.close()
+
+            mask = Image.fromarray(get_the_central_cell_mask(cp_img, wsize=0))
+            if np.array(mask).sum() > 0.6 * (np.array(mask).shape[0] * np.array(mask).shape[1]):
+                return None
+            rot_mask = Image.new('L', (inp_size, inp_size), (1))
+            return np.array(Image.merge("RGB", [cp_img, mask, rot_mask]))
+
+        def get_img_names(dir_name):
+            img_names = [f for f in os.listdir(dir_name) if f.endswith('.png')]
+            if all_data:
+                return img_names
+            
+            delimetr = int(0.75 * len(img_names))
+            
+            if train:
+                img_names = img_names[:delimetr]
+            else:
+                img_names = img_names[delimetr:]
+            return img_names
+
+        ## We should take only negative samples
+        for num in nums:
+            neg_dir = os.path.join(main_dir, str(num) + '_nocentrioles')
+
+            ## Negative sampless
+            for img_name in get_img_names(neg_dir):
+                self.name.append(os.path.join(neg_dir, img_name))
+                img = get_img(self.name[-1])
+                if img is not None:
+                    self.samples.append(img)
+                    self.patient.append(num)
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        image = self.samples[idx]
+        if np.random.randint(0,2) == 0:
+            pil_img  = Image.fromarray(image[:,:,0])
+            pil_mask = Image.fromarray(image[:,:,1])
+            rot_mask = Image.new('L', (self.inp_size, self.inp_size), (1))
+            ret_img  = Image.merge("RGB", [pil_img, pil_mask, rot_mask])
+            image, label = ret_img, 0
+        else:
+            proj  = get_random_projection(self.centriolle)
+            image, label = add_projection(image.copy(), proj, crop=self.crop, stride=self.stride, alpha=0.5)
+        if self.transform:
+            image = self.transform(image)
+        image, _ = image2bag(image.float(), size=self.wsize, stride=self.stride, crop=self.crop, pyramid_layers=self.pyramid_layers)
+        return image, label
+
+    def class_balance(self):
+        return 0.5
+
+    def class_balance_for_patients(self):
+        positives = {}
+        total     = {}
+        for i, num in enumerate(self.patient):
+            if num not in positives:
+                positives[num] = 0.0
+                total[num]     = 0.0
+            positives[num] += 0.5
+            total[num]     += 1
+        for num in positives:
+            positives[num] = positives[num] / total[num]
+        return positives
