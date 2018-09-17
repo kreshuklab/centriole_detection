@@ -189,42 +189,18 @@ if __name__ == "__main__":
         writer.add_scalar('train_loss', loss, epoch_num)
         writer.add_scalar('learning_rate', float(scheduler.get_lr()[0]), epoch_num)
         
-        ################
-        ## VAlIDATION ##
-        ################
+        if epoch_num % 10 == 1:
+            ################
+            ## VAlIDATION ##
+            ################
 
-        model.eval()
-        criterion.eval()
-
-        global_loss = 0.0
-        accuracy    = 0.0 
-        
-        for inputs, label in test_dl:
-            inputs, label = inputs.to(device), label.to(device)
-
-            outputs = model(inputs)
-            loss = criterion(outputs, label)
-            global_loss += loss.item()
-            accuracy    += (round(float(F.softmax(outputs, dim=1)[0][0])) == float(label))
-        
-        global_loss /= len(test_dl)
-        accuracy    /= len(test_dl)
-
-        loss, acc = global_loss, accuracy
-        writer.add_scalar('test_loss', loss, epoch_num)
-        writer.add_scalar('test_accuracy', acc, epoch_num)
-
-        ################
-        ## VAlIDATION  FOR ART##
-        ################
-        if args.artif:
             model.eval()
             criterion.eval()
 
             global_loss = 0.0
             accuracy    = 0.0 
             
-            for inputs, label in real_test_dl:
+            for inputs, label in test_dl:
                 inputs, label = inputs.to(device), label.to(device)
 
                 outputs = model(inputs)
@@ -236,8 +212,33 @@ if __name__ == "__main__":
             accuracy    /= len(test_dl)
 
             loss, acc = global_loss, accuracy
-            writer.add_scalar('real_test_loss', loss, epoch_num)
-            writer.add_scalar('real_test_err', acc, epoch_num)
+            writer.add_scalar('test_loss', loss, epoch_num)
+            writer.add_scalar('test_accuracy', acc, epoch_num)
+
+            #########################
+            ## VAlIDATION  FOR ART ##
+            #########################
+            if args.artif:
+                model.eval()
+                criterion.eval()
+
+                global_loss = 0.0
+                accuracy    = 0.0 
+                
+                for inputs, label in real_test_dl:
+                    inputs, label = inputs.to(device), label.to(device)
+
+                    outputs = model(inputs)
+                    loss = criterion(outputs, label)
+                    global_loss += loss.item()
+                    accuracy    += (round(float(F.softmax(outputs, dim=1)[0][0])) == float(label))
+                
+                global_loss /= len(test_dl)
+                accuracy    /= len(test_dl)
+
+                loss, acc = global_loss, accuracy
+                writer.add_scalar('real_test_loss', loss, epoch_num)
+                writer.add_scalar('real_test_err', acc, epoch_num)
 
         ################
         ## SAVE&CHECK ##
