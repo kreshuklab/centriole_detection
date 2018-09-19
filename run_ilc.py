@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 #INTERNAL IMPORTS
-from src.datasets import CentriollesDatasetPatients, CentriollesDatasetBags, MnistBags, GENdataset
+from src.datasets import CentriollesDatasetPatients, CentriollesDatasetBags, MnistBags, GENdataset, CentriollesDatasetOn
 from src.utils import get_basic_transforms, log_info
 from src.trainer import  train, validate
 import src.implemented_models as impl_models
