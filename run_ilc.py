@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run learning of simple CNN implementation')
 
     parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
-    parser.add_argument('--img_size', type=int, default=512, help='Size of input images')
+    parser.add_argument('--img_size', type=int, default=60, help='Size of input images')
     parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate')
     parser.add_argument('--wd', type=float, default=1e-6, help='Weight decay')
     parser.add_argument('--ld', type=float, default=0.95, help='Learning rate multipliyer for every 10 epoches')
@@ -55,12 +55,12 @@ if __name__ == "__main__":
     train_tr, test_tr = get_basic_transforms()
     
     if args.test:
-        train_ds = CentriollesDatasetOn(transform=train_tr, pos_dir='dataset/0_cifar_class', neg_dir='dataset/0_cifar_class', inp_size=60)
-        test_ds  = CentriollesDatasetOn(transform=test_tr , pos_dir='dataset/1_cifar_class', neg_dir='dataset/1_cifar_class', inp_size=60)
+        train_ds = CentriollesDatasetOn(transform=train_tr, pos_dir='dataset/0_cifar_class', neg_dir='dataset/0_cifar_class', inp_size=args.img_size)
+        test_ds  = CentriollesDatasetOn(transform=test_tr , pos_dir='dataset/1_cifar_class', neg_dir='dataset/1_cifar_class', inp_size=args.img_size)
         log_info('Test bags dataset is used')
     else:
-        train_ds = GENdataset(nums=[402], transform=train_tr, inp_size=args.img_size, one=True, crop=True)
-        test_ds  = GENdataset(nums=[402], transform=test_tr,  inp_size=args.img_size, one=True, crop=True, train=False)
+        train_ds = CentriollesDatasetOn(transform=train_tr, pos_dir='dataset/art_pos', neg_dir='dataset/art_neg', inp_size=args.img_size)
+        test_ds  = CentriollesDatasetOn(transform=test_tr , pos_dir='dataset/art_pos', neg_dir='dataset/art_neg', inp_size=args.img_size)
         log_info('ILC dataset is used')  
 
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=0)
