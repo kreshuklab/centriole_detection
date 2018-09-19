@@ -99,7 +99,7 @@ class TransitionLayer(nn.Module):
 
     def forward(self, x):
         out = self.conv1(F.relu(self.bn1(x)))
-        out = F.max_pool2d(out, 2)
+        out = F.avg_pool2d(out, 2)
         return out
 
 class DenseBlock(nn.Module):
@@ -215,7 +215,8 @@ class DenseNet(nn.Module):
         out = self.bn(out)
         # it is a global pooling, so the resolution of the image after all previous blocks should be 7x7
         # is it ok for our part to have an avg pooling in the end? 
-        out = F.max_pool2d(out, 7)
+        #or 7 if it is previous models
+        out = F.avg_pool2d(out, 3)
 
         #for skip connections:
         # mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')

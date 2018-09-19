@@ -18,6 +18,8 @@ DenseNet_BN_32k_to7x7_ap_3fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 10
 DenseNet_BN_32k_to7x7_mp_3fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 100], max_pool=True)
 DenseNet_BN_32k_to7x7_mp_5fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 512, 128, 32], max_pool=True)
 
+ICL_DenseNet_3fc = DenseNet(32, [6, 12, 32], [1280, 80, 16])
+ICL_DenseNet_4fc = DenseNet(32, [12, 22, 42], [1808, 320, 80, 4])
 
 #### VGGS ###
 CNN_512_1conv_to15x15_6fc_32filter = \

@@ -190,7 +190,7 @@ def get_centriolle(h=34, r=6, bg=60, th=1):
         centriolle = ncentriolle.copy()
     return centriolle
 
-def get_random_projection(shape, depth=10, min_sum=450, sg=5):
+def get_random_projection(shape, depth=10, min_sum=400, sg=5):
     '''
     Args:
         depth:  depth of accumulation
@@ -221,6 +221,11 @@ def show_3d_shape(shape):
     ax.scatter(x, y, -z, zdir='z', c= 'red')
 
 def show_2d_slice(sl, size=2):
+    if type(sl) == np.ndarray:
+        if len(sl.shape) == 3:
+            sl = sl[:,:,0]
+    elif len(sl.size()) == 3:
+        sl = sl[0,:,:]
     fig = plt.figure(figsize=(size, size))
     plt.imshow(sl, interpolation='nearest', cmap='gray')
 
@@ -241,7 +246,7 @@ def check_app_br(img, mask, extr):
     mask = (img > extr * mask) * (mask > 0)
     return mask.sum() == bf
 
-def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=0.1, debug=False):
+def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=0.1, debug=False, one=True):
     img, mask = inp[:,:,0], inp[:,:,1]
     pil_mask = Image.fromarray(mask)
     mask = np.array(mask != mask.min())
@@ -264,8 +269,23 @@ def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=
             boxes.append((cx, cy, wsize[0], wsize[1]))
 
     if len(boxes) == 0:
+        if one:
+            mx, my = int(w/2), int(h/2)
+            wx, wy = wsize
+            lx, ly = max(0, mx - int(wx * 0.8)), max(0, my - int(wy * 0.8))
+            rx, ry = min(w, mx + int(wx * 0.8)), min(h, my + int(wy * 0.8))
+            return Image.fromarray(img[lx:rx, ly:ry]), 0
         return img, 0
-      
+    
+    if one and np.random.randint(0,2) == 0 :
+        weights = [1 for cx, cy, wx, wy in boxes]
+        cx, cy, wx, wy = boxes[weighted_rand(weights)]
+    
+        mx, my = int(cx + wx/2), int(cy + wy/2)
+        lx, ly = max(0, mx - wx), max(0, my - wy)
+        rx, ry = min(w, mx + wx), min(h, my + wy)
+        return Image.fromarray(img[lx:rx, ly:ry]), 0
+
     weights = [1 / (float(img[cx:cx+wx, cy:cy+wy].std()) ** 6) if check_app_br(img[cx:cx+wx, cy:cy+wy], proj, gstd * alpha) else 0 for cx, cy, wx, wy in boxes]
     
 #     if debug:
@@ -282,13 +302,19 @@ def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=
         color = (255, 0, 0)
         alpha = 0.5
         img = cv2.addWeighted(img, 1.0 - alpha, cv2.rectangle(img.copy(), (cy,cx), (cy+wy, cx+wx), color), alpha, 0.0)
-
+    
     for x in range(wx):
         for y in range(wy):
             img[cx + x, cy + y] = max(g5per, img[cx + x, cy + y] - gstd * alpha * proj[x, y] * (np.random.random() / 5 + 0.9))
 #             if proj[x, y] > 0:
 #                 img[cx + x, cy + y] = max(0, int(gmean * (1 - gstd * proj[x, y] / 255 * (1 - alpha))))
 
+    if one:
+        mx, my = int(cx + wx/2), int(cy + wy/2)
+        lx, ly = max(0, mx - wx), max(0, my - wy)
+        rx, ry = min(w, mx + wx), min(h, my + wy)
+        return Image.fromarray(img[lx:rx, ly:ry]), 1
+    
     pil_img  = Image.fromarray(img)
     rot_mask = Image.new('L', (w, h), (1))
     ret_img  = Image.merge("RGB", [pil_img, pil_mask, rot_mask])

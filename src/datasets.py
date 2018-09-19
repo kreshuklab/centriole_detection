@@ -5,7 +5,7 @@ from torchvision import datasets, transforms
 from torch.utils.data import Dataset, DataLoader
 
 from src.utils import image2bag, get_the_central_cell_mask
-from src.utils import get_centriolle, add_projection, get_random_projection
+from src.utils import get_centriolle, add_projection, get_random_projection, local_autoscale_ms
 from src.utils import show_2d_slice
 
 import sys
@@ -360,7 +360,7 @@ class GENdataset(Dataset):
     def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], 
                  main_dir='../centrioles/dataset/new_edition/filtered',
                  train=True, all_data=False, transform=None, inp_size=512, wsize=(32, 32), 
-                 stride=0.5, crop=False, pyramid_layers=1):
+                 stride=0.5, crop=False, pyramid_layers=1, one=False):
         self.samples = []
         self.patient = []
         self.inp_size = inp_size
@@ -371,6 +371,7 @@ class GENdataset(Dataset):
         self.crop = crop
         self.pyramid_layers = pyramid_layers
         self.centriolle = get_centriolle()
+        self.one = one
 
         def get_img(img_name):
             im = Image.open(img_name).convert('L')
@@ -416,6 +417,17 @@ class GENdataset(Dataset):
 
     def __getitem__(self, idx):
         image = self.samples[idx]
+        if self.one:
+            proj  = get_random_projection(self.centriolle)
+            image, label = add_projection(image.copy(), proj, crop=self.crop, stride=self.stride, alpha=0.5, one=True)
+            if self.transform:
+                image = self.transform(image)
+            mx, my = int(image.size()[1]/2), int(image.size()[2]/2)
+            rx, ry = int(proj.shape[0] / 2), int(proj.shape[1] / 2)
+            image = image[:, mx - rx:mx + rx, my - ry:my + ry]
+            image = local_autoscale_ms(image)
+            return image.float(), label
+
         if np.random.randint(0,2) == 0:
             pil_img  = Image.fromarray(image[:,:,0])
             pil_mask = Image.fromarray(image[:,:,1])
