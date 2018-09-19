@@ -55,14 +55,25 @@ if __name__ == "__main__":
     train_tr, test_tr = get_basic_transforms()
     
     if args.test:
-        train_ds = CentriollesDatasetOn(transform=train_tr, pos_dir='dataset/0_cifar_class', neg_dir='dataset/0_cifar_class', inp_size=args.img_size)
-        test_ds  = CentriollesDatasetOn(transform=test_tr , pos_dir='dataset/1_cifar_class', neg_dir='dataset/1_cifar_class', inp_size=args.img_size)
+        train_ds = CentriollesDatasetOn(transform=train_tr, 
+                                        pos_dir='dataset/mnist/1', 
+                                        neg_dir='dataset/mnist/0', inp_size=args.img_size)
+        test_ds  = CentriollesDatasetOn(transform=test_tr , 
+                                        pos_dir='dataset/mnist/1', 
+                                        neg_dir='dataset/mnist/0', inp_size=args.img_size, train=False)
         log_info('Test bags dataset is used')
     else:
-        train_ds = CentriollesDatasetOn(transform=train_tr, pos_dir='dataset/art_pos', neg_dir='dataset/art_neg', inp_size=args.img_size)
-        test_ds  = CentriollesDatasetOn(transform=test_tr , pos_dir='dataset/art_pos', neg_dir='dataset/art_neg', inp_size=args.img_size)
+        train_ds = CentriollesDatasetOn(transform=train_tr, 
+                                        pos_dir='dataset/artificial/train_pos/', 
+                                        neg_dir='dataset/artificial/train_neg/', 
+                                        inp_size=args.img_size, all_data=True)
+        test_ds  = CentriollesDatasetOn(transform=test_tr , 
+                                        pos_dir='dataset/artificial/test_pos/', 
+                                        neg_dir='dataset/artificial/test_neg/', 
+                                        inp_size=args.img_size,  all_data=True)
         log_info('ILC dataset is used')  
 
+    print(train_ds[0][0].size())
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=0)
     test_dl  = DataLoader(test_ds,  batch_size=args.batch_size, shuffle=True, num_workers=0)
     
@@ -142,7 +153,7 @@ if __name__ == "__main__":
         loss = global_loss
         writer.add_scalar('train_loss', loss, epoch_num)
         writer.add_scalar('learning_rate', float(scheduler.get_lr()[0]), epoch_num)
-        
+        log_info('Epoch: ', epoch_num, 'train_loss: ', loss, 'lr: ', float(scheduler.get_lr()[0]))
     
         ################
         ## VAlIDATION ##
@@ -168,6 +179,7 @@ if __name__ == "__main__":
         loss, acc = global_loss, accuracy
         writer.add_scalar('test_loss', loss, epoch_num)
         writer.add_scalar('test_accuracy', acc, epoch_num)
+        log_info('Epoch: ', epoch_num, 'test_loss: ', loss, 'test_accuracy: ', acc)
 
         ################
         ## SAVE&CHECK ##

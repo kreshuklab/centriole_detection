@@ -51,7 +51,7 @@ class CentriollesDatasetOn(Dataset):
         for img_name in get_img_names(pos_dir):
             im = Image.open(os.path.join(pos_dir, img_name)).convert('L')
             im.load()
-            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
+            im = im.resize((inp_size, inp_size), Image.ANTIALIAS)
             self.samples.append(im.copy())
             self.classes.append(1)
             im.close()
@@ -60,7 +60,7 @@ class CentriollesDatasetOn(Dataset):
         for img_name in get_img_names(neg_dir):
             im = Image.open(os.path.join(neg_dir, img_name)).convert('L')
             im.load()
-            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
+            im = im.resize((inp_size, inp_size), Image.ANTIALIAS)
             self.samples.append(im.copy())
             self.classes.append(0)
             im.close()
@@ -392,7 +392,7 @@ class GENdataset(Dataset):
             if all_data:
                 return img_names
             
-            delimetr = int(0.75 * len(img_names))
+            delimetr = int(0.9 * len(img_names))
             
             if train:
                 img_names = img_names[:delimetr]
