@@ -52,6 +52,7 @@ class CentriollesDatasetOn(Dataset):
             im = Image.open(os.path.join(pos_dir, img_name)).convert('L')
             im.load()
             im = im.resize((inp_size, inp_size), Image.ANTIALIAS)
+            
             self.samples.append(im.copy())
             self.classes.append(1)
             im.close()

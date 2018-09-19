@@ -1,4 +1,6 @@
 from src.architectures import View, DenseNet, CustomMIL, get_cnn
+from inferno.extensions.layers.convolutional import ConvELU2D
+from inferno.extensions.layers.reshape import Flatten
 
 import torch.nn as nn
 
@@ -69,4 +71,18 @@ CNN_512_7conv_to4x4_3fc = \
                        nn.Linear(16 * 4 * 4, 16 * 4), nn.ReLU(),
                        nn.Linear(16 * 4, 16), nn.ReLU(),
                        nn.Linear(16, 2))
+
+Inferno_example = nn.Sequential(
+    ConvELU2D(in_channels=1, out_channels=256, kernel_size=3),
+    nn.MaxPool2d(kernel_size=2, stride=2),
+    ConvELU2D(in_channels=256, out_channels=256, kernel_size=3),
+    nn.MaxPool2d(kernel_size=2, stride=2),
+    ConvELU2D(in_channels=256, out_channels=256, kernel_size=3),
+    nn.MaxPool2d(kernel_size=2, stride=2),
+    ConvELU2D(in_channels=256, out_channels=256, kernel_size=3),
+    nn.MaxPool2d(kernel_size=2, stride=2),
+    Flatten(),
+    nn.Linear(in_features=(256 * 3 * 3), out_features=2),
+    nn.Softmax(dim=1)
+)
 

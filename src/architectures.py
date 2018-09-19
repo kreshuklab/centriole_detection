@@ -225,7 +225,7 @@ class DenseNet(nn.Module):
         out = out.view(out.size(0), -1)
         # There was not anything about ReLu and BN in the original paper
         out = self.fc_part(out)
-        out = self.clf(out)
+        out = F.log_softmax(self.clf(out), dim=1)
         return out
 
 
