@@ -153,7 +153,7 @@ if __name__ == "__main__":
         loss = global_loss
         writer.add_scalar('train_loss', loss, epoch_num)
         writer.add_scalar('learning_rate', float(scheduler.get_lr()[0]), epoch_num)
-        log_info('Epoch: ', epoch_num, 'train_loss: ', loss, 'lr: ', float(scheduler.get_lr()[0]))
+        log_info('Epoch: ' + str(epoch_num) + 'train_loss: ' + str(loss) + 'lr: ' + str(float(scheduler.get_lr()[0])))
     
         ################
         ## VAlIDATION ##
@@ -179,7 +179,7 @@ if __name__ == "__main__":
         loss, acc = global_loss, accuracy
         writer.add_scalar('test_loss', loss, epoch_num)
         writer.add_scalar('test_accuracy', acc, epoch_num)
-        log_info('Epoch: ', epoch_num, 'test_loss: ', loss, 'test_accuracy: ', acc)
+        log_info('Epoch: ' + str(epoch_num) + 'test_loss: ' + str(loss) + 'test_accuracy: ' + str(acc))
 
         ################
         ## SAVE&CHECK ##
