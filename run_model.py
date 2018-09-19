@@ -61,14 +61,14 @@ if __name__ == "__main__":
     train_tr, test_tr = get_basic_transforms()
     if args.use_bags:
         if args.artif:
-            train_ds = GENdataset(transform=train_tr, 
+            train_ds = GENdataset(transform=train_tr,
                                                 inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
                                                 crop=args.crop, stride=args.stride, pyramid_layers=args.pyramid_layers)
-            test_ds  = GENdataset(transform=test_tr, 
+            test_ds  = GENdataset(transform=test_tr,
                                                 inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
                                                 crop=args.crop, stride=args.stride, train=False, 
                                                 pyramid_layers=args.pyramid_layers)
-            real_test_ds  = CentriollesDatasetBags(transform=test_tr, 
+            real_test_ds  = CentriollesDatasetBags(transform=test_tr,
                                                 inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
                                                 crop=args.crop, stride=args.stride, train=False, 
                                                 pyramid_layers=args.pyramid_layers)
@@ -188,7 +188,7 @@ if __name__ == "__main__":
         loss = global_loss
         writer.add_scalar('train_loss', loss, epoch_num)
         writer.add_scalar('learning_rate', float(scheduler.get_lr()[0]), epoch_num)
-        
+    
         if epoch_num % 10 == 1:
             ################
             ## VAlIDATION ##
@@ -233,32 +233,32 @@ if __name__ == "__main__":
                     global_loss += loss.item()
                     accuracy    += (round(float(F.softmax(outputs, dim=1)[0][0])) == float(label))
                 
-                global_loss /= len(test_dl)
-                accuracy    /= len(test_dl)
+                global_loss /= len(real_test_dl)
+                accuracy    /= len(real_test_dl)
 
                 loss, acc = global_loss, accuracy
                 writer.add_scalar('real_test_loss', loss, epoch_num)
                 writer.add_scalar('real_test_err', acc, epoch_num)
 
-        ################
-        ## SAVE&CHECK ##
-        ################
+            ################
+            ## SAVE&CHECK ##
+            ################
 
-        if args.epoch != 0 and epoch_num >= args.epoch:
-            log_info('Max number of epochs is exceeded. Training is finished!')
-            break
-        
-        ## Save model
-        if args.save_each != 0 and epoch_num % args.save_each == 0:
-            file_name = '{}.pt'.format(str(epoch_num))
-            torch.save(model, os.path.join(weight_dir, file_name))
-            log_info('Model was saved in epoch number %d with validation accuracy %f and loss %f' % 
-                        (epoch_num, acc, loss))
-        if loss < best_loss:
-            best_loss = loss
-            torch.save(model, os.path.join(weight_dir, 'best_weight.pt'))
-            log_info('Model was saved as best on epoch number %d with validation accuracy %f and loss %f' % 
-                        (epoch_num, acc, loss))
+            if args.epoch != 0 and epoch_num >= args.epoch:
+                log_info('Max number of epochs is exceeded. Training is finished!')
+                break
+            
+            ## Save model
+            if args.save_each != 0 and epoch_num % args.save_each < 10:
+                file_name = '{}.pt'.format(str(epoch_num))
+                torch.save(model, os.path.join(weight_dir, file_name))
+                log_info('Model was saved in epoch number %d with validation accuracy %f and loss %f' % 
+                            (epoch_num, acc, loss))
+            if loss < best_loss:
+                best_loss = loss
+                torch.save(model, os.path.join(weight_dir, 'best_weight.pt'))
+                log_info('Model was saved as best on epoch number %d with validation accuracy %f and loss %f' % 
+                            (epoch_num, acc, loss))
 
         epoch_num += 1
         scheduler.step()

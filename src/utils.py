@@ -211,6 +211,7 @@ def get_random_projection(shape, depth=10, min_sum=400, sg=5):
         for x in range(shape.shape[0]):
             for y in range(shape.shape[1]):
                 proj[x,y] = shape[x, y, height:min(height + depth, shape.shape[2])].sum()
+
     return cv2.GaussianBlur(proj,(sg,sg),0)
     
 def show_3d_shape(shape):
