@@ -9,7 +9,7 @@ TIME_LIMIT = 10
 ID         = 'default'
 MAIL_TYPE  = 'FAIL'
 
-RUNNING_COMAND = './run_ilc.py'
+RUNNING_COMAND = './run_ilc_inferno.py'
 ADDITIONAL_MODULES = 'module load cuDNN'
 ARGUMENTS_FOR_RUN  = ''
 
