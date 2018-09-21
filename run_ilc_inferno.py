@@ -80,7 +80,7 @@ if __name__ == "__main__":
         .build_optimizer('Adam') \
         .validate_every((2, 'epochs')) \
         .save_every((5, 'epochs')) \
-        .save_to_directory(model_dir) \
+        .save_to_directory(weight_dir) \
         .set_max_num_epochs(10000) \
         .build_logger(TensorboardLogger(log_scalars_every=(1, 'iteration'),
                                         log_images_every=(1, 'epoch')),
