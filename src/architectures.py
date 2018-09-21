@@ -225,7 +225,7 @@ class DenseNet(nn.Module):
         out = out.view(out.size(0), -1)
         # There was not anything about ReLu and BN in the original paper
         out = self.fc_part(out)
-        out = F.log_softmax(self.clf(out), dim=1)
+        out = self.clf(out)
         return out
 
 
@@ -280,6 +280,97 @@ class CustomMIL(nn.Module):
         x = x.squeeze(0)
 
         H = self.feature_extractor_part1(x)
+        H = H.view(-1, self.p2in)
+        H = self.feature_extractor_part2(H)  # NxL
+
+        A = self.attention(H)  # NxK
+        A = torch.transpose(A, 1, 0)  # KxN
+        A = F.softmax(A, dim=1)  # softmax over N
+
+        M = torch.mm(A, H)  # KxL
+
+        Y_prob = self.classifier(M)
+        Y_hat = torch.ge(Y_prob, 0.5).float()
+
+        #return Y_prob, Y_hat, A
+        return Y_prob
+
+
+
+
+###############################################################################
+###                             NEW CLASS                                   ###
+###############################################################################
+
+
+
+class DenseMIL(nn.Module):
+    def __init__(self, growthRate, nLayers, reduction=0.5, nClasses=2, 
+                        crosscon=False, bottleneck=True, p2in=50*4*4):
+        super(DenseMIL, self).__init__()
+
+        self.L = 500
+        self.D = 128
+        self.K = 1
+        self.p2in = p2in
+
+        # First convolution layer
+        nChannels = 2*growthRate
+        self.conv1 = nn.Conv2d(1, nChannels, kernel_size=3, padding=1, stride=2, bias=False)
+
+        # DenseBlocks + TransitionLayers 
+        main_blocks = []
+        for i, depth in enumerate(nLayers):
+            main_blocks.append(DenseBlock(nChannels, growthRate, depth, bottleneck))
+            nChannels += depth * growthRate
+            # Final Dense layer without transition
+            if i != len(nLayers) - 1:
+                main_blocks.append(TransitionLayer(nChannels, reduction))
+                nChannels = int(math.floor(nChannels*reduction))
+        self.main_blocks = nn.Sequential(*main_blocks)
+
+        self.bn = nn.BatchNorm2d(nChannels)
+
+        self.feature_extractor_part2 = nn.Sequential(
+            nn.Linear(self.p2in, self.L),
+            nn.ReLU(),
+            #nn.Dropout(dropp),
+            nn.Linear(self.L, self.L),
+            nn.ReLU(),
+            #nn.Dropout(dropp)
+        )
+
+        self.attention = nn.Sequential(
+            nn.Linear(self.L, self.D),
+            nn.Tanh(),
+            nn.Linear(self.D, self.K)
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Linear(self.L*self.K, 2),
+            #nn.Sigmoid()
+        )
+    
+    def freeze_weights(self):
+        ## Freeze the gradients (it worse to check it again)
+        for param in self.conv1.parameters():
+            param.requires_grad = False
+        for param in self.main_blocks.parameters():
+            param.requires_grad = False
+        for param in self.bn.parameters():
+            param.requires_grad = False
+
+    def forward(self, x):
+        x = x.squeeze(0)
+        out = F.max_pool2d(self.conv1(x), 3, stride=2)
+        out = self.main_blocks(out)
+        
+        out = self.bn(out)
+        # it is a global pooling, so the resolution of the image after all previous blocks should be 7x7
+        # is it ok for our part to have an avg pooling in the end? 
+        #or 7 if it is previous models
+        H = F.avg_pool2d(out, 3)
+        
         H = H.view(-1, self.p2in)
         H = self.feature_extractor_part2(H)  # NxL
 

@@ -22,6 +22,16 @@ import torch.nn.functional as F
 import inferno.io.transform as inftransforms
 
 
+def init_weights(model, ref_model):
+    ref_params = ref_model.state_dict()
+    mod_params =     model.state_dict()
+
+    for name1 in ref_params:
+        if name1 in mod_params:
+            mod_params[name1].data.copy_(ref_params[name1])
+
+    model.load_state_dict(mod_params)
+
 def image2bag(inp, size=(28, 28), stride=0.5, crop=False, pyramid_layers=1):
     bag=[]
     if crop:
@@ -43,7 +53,7 @@ def image2bag(inp, size=(28, 28), stride=0.5, crop=False, pyramid_layers=1):
                         continue
                 cropped = img[cx:cx+wsize[0], cy:cy+wsize[1]]
                 cropped = local_autoscale_ms(cropped)
-                cropped = F.upsample(cropped[None, None, :, :], size=size, mode='bilinear')[0]
+                cropped = F.interpolate(cropped[None, None, :, :], size=size, mode='bilinear', align_corners=True)[0]
                 boxes.append((cx, cy, wsize[0], wsize[1]))
                 bag.append(cropped)
 
@@ -247,7 +257,7 @@ def check_app_br(img, mask, extr):
     mask = (img > extr * mask) * (mask > 0)
     return mask.sum() == bf
 
-def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=0.1, debug=False, one=True):
+def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=0.1, debug=False, one=False):
     img, mask = inp[:,:,0], inp[:,:,1]
     pil_mask = Image.fromarray(mask)
     mask = np.array(mask != mask.min())

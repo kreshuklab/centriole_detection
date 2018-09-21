@@ -73,7 +73,6 @@ if __name__ == "__main__":
                                         inp_size=args.img_size,  all_data=True)
         log_info('ILC dataset is used')  
 
-    print(train_ds[0][0].size())
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=0)
     test_dl  = DataLoader(test_ds,  batch_size=args.batch_size, shuffle=True, num_workers=0)
     

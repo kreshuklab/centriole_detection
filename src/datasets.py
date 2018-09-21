@@ -173,7 +173,7 @@ class CentriollesDatasetBags(Dataset):
 
     def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/filtered',
                  all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512, wsize=(32, 32), 
-                 stride=0.5, crop=False, pyramid_layers=1):
+                 stride=0.5, crop=False, pyramid_layers=1, bags=True):
         self.samples = []
         self.classes = []
         self.patient = []
@@ -181,6 +181,7 @@ class CentriollesDatasetBags(Dataset):
         self.name = []
         self.wsize = wsize 
         self.stride = stride
+        self.bags=bags
         self.crop = crop
         self.pyramid_layers = pyramid_layers
 
@@ -246,7 +247,8 @@ class CentriollesDatasetBags(Dataset):
         else:
             images, labels = self.samples[idx], self.classes[idx]
 
-        images, _ = image2bag(images.float(), size=self.wsize, stride=self.stride, crop=self.crop, pyramid_layers=self.pyramid_layers)
+        if self.bags:
+            images, _ = image2bag(images.float(), size=self.wsize, stride=self.stride, crop=self.crop, pyramid_layers=self.pyramid_layers)
         return images, labels
 
     def class_balance(self):
@@ -361,7 +363,7 @@ class GENdataset(Dataset):
     def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], 
                  main_dir='../centrioles/dataset/new_edition/filtered',
                  train=True, all_data=False, transform=None, inp_size=512, wsize=(32, 32), 
-                 stride=0.5, crop=False, pyramid_layers=1, one=False):
+                 stride=0.5, crop=False, pyramid_layers=1, one=False, bags=True):
         self.samples = []
         self.patient = []
         self.inp_size = inp_size
@@ -373,6 +375,7 @@ class GENdataset(Dataset):
         self.pyramid_layers = pyramid_layers
         self.centriolle = get_centriolle()
         self.one = one
+        self.bags = bags
 
         def get_img(img_name):
             im = Image.open(img_name).convert('L')
@@ -440,7 +443,8 @@ class GENdataset(Dataset):
             image, label = add_projection(image.copy(), proj, crop=self.crop, stride=self.stride, alpha=0.5)
         if self.transform:
             image = self.transform(image)
-        image, _ = image2bag(image.float(), size=self.wsize, stride=self.stride, crop=self.crop, pyramid_layers=self.pyramid_layers)
+        if self.bags:
+            image, _ = image2bag(image.float(), size=self.wsize, stride=self.stride, crop=self.crop, pyramid_layers=self.pyramid_layers)
         return image, label
 
     def class_balance(self):
