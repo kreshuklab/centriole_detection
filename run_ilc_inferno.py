@@ -48,8 +48,8 @@ if __name__ == "__main__":
                                         inp_size=args.img_size,  all_data=True)
         log_info('ILC dataset is used')  
     
-    train_dl = DataLoader(train_ds, batch_size=4, shuffle=True, num_workers=0)
-    test_dl  = DataLoader(test_ds,  batch_size=4, shuffle=True, num_workers=0)
+    train_dl = DataLoader(train_ds, batch_size=10, shuffle=True, num_workers=0)
+    test_dl  = DataLoader(test_ds,  batch_size=10, shuffle=True, num_workers=0)
 
     log_info('Datasets are initialized!')
 
