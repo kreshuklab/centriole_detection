@@ -107,7 +107,7 @@ if __name__ == "__main__":
     trainer = Trainer(model) \
         .build_criterion('CrossEntropyLoss') \
         .build_metric('CategoricalError') \
-        .build_optimizer('Adam') \
+        .build_optimizer('Adam', param_groups=filter(lambda p: p.requires_grad, model.parameters())) \
         .validate_every((2, 'epochs')) \
         .save_every((5, 'epochs')) \
         .save_to_directory(model_dir) \
