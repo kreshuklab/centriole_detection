@@ -5,8 +5,7 @@ import argparse
 import os
 import subprocess
 import sys
-import dill
- 
+
 #INTERNAL IMPORTS
 from src.datasets import CentriollesDatasetBags, GENdataset
 from src.utils import get_basic_transforms, log_info, init_weights
@@ -31,7 +30,7 @@ class GradChecker(Callback):
                                           value.grad.data.cpu().numpy(),
                                           self.trainer.iteration_count)
 
-    
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run learning of simple CNN implementation')
@@ -68,25 +67,6 @@ if __name__ == "__main__":
     test_dl  = DataLoader(test_ds,  batch_size=1, shuffle=True, num_workers=0)
 
     log_info('Datasets are initialized!')
-
-    ## INIT model
-    def load(self, from_directory=None, best=False, filename=None, map_location=None):
-        from_directory = self._save_to_directory if from_directory is None else from_directory
-        assert from_directory is not None, "Nowhere to load from."
-        # Get file name
-        if filename is None:
-            filename = self._best_checkpoint_filename if best else self._checkpoint_filename
-        # Load the dictionary
-        config_dict = torch.load(os.path.join(from_directory, filename),
-                                pickle_module=dill, map_location=map_location)
-
-        # This is required to prevent an infinite save loop?
-        self._is_iteration_with_best_validation_score = False
-        # Set config
-        self.set_config(config_dict)
-        return self
-
-    Trainer.load = load
 
     ref_trainer = Trainer(ICL_DenseNet_3fc)
     if torch.cuda.is_available():
