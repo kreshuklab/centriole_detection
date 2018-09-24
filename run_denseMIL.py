@@ -18,6 +18,20 @@ import torch
 from inferno.trainers.basic import Trainer
 from torch.utils.data import DataLoader
 from inferno.trainers.callbacks.logging.tensorboard import TensorboardLogger
+from inferno.trainers.callbacks.base import Callback
+from inferno.trainers.callbacks.scheduling import AutoLR
+
+class GradChecker(Callback):
+    def end_of_epoch(self, **_):
+        for name, value in self.trainer.model.named_parameters():
+            if value.grad is not None:
+                self.trainer.logger.writer.add_histogram(name, value.data.cpu().numpy(),
+                                          self.trainer.iteration_count)
+                self.trainer.logger.writer.add_histogram(name + '/grad',
+                                          value.grad.data.cpu().numpy(),
+                                          self.trainer.iteration_count)
+
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run learning of simple CNN implementation')
@@ -107,14 +121,18 @@ if __name__ == "__main__":
     trainer = Trainer(model) \
         .build_criterion('CrossEntropyLoss') \
         .build_metric('CategoricalError') \
-        .build_optimizer('Adam', param_groups=filter(lambda p: p.requires_grad, model.parameters())) \
-        .validate_every((2, 'epochs')) \
+        .build_optimizer('Adam') \
+        .validate_every((1, 'epochs')) \
         .save_every((5, 'epochs')) \
         .save_to_directory(model_dir) \
         .set_max_num_epochs(10000) \
         .build_logger(TensorboardLogger(log_scalars_every=(1, 'iteration'),
                                         log_images_every=(1, 'epoch')),
                                         log_directory=logs_dir)
+
+    trainer.register_callback(GradChecker())
+    trainer.register_callback(AutoLR(0.9, (1, 'epochs'), 
+                                    consider_improvement_with_respect_to='previous'))
 
     # Bind loaders
     trainer \
