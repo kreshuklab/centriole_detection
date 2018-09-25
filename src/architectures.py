@@ -216,17 +216,18 @@ class DenseNet(nn.Module):
         # it is a global pooling, so the resolution of the image after all previous blocks should be 7x7
         # is it ok for our part to have an avg pooling in the end? 
         #or 7 if it is previous models
-        out = F.avg_pool2d(out, 3)
+        features = F.avg_pool2d(out, 3)
+
 
         #for skip connections:
         # mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
         # mem_data = torch.cat((x, mem_data), 1)
 
-        out = out.view(out.size(0), -1)
+        out = features.view(features.size(0), -1)
         # There was not anything about ReLu and BN in the original paper
         out = self.fc_part(out)
         out = self.clf(out)
-        return out
+        return out, features
 
 
 
