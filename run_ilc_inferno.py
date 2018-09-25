@@ -7,8 +7,8 @@ import subprocess
 import sys
  
 #INTERNAL IMPORTS
-from src.datasets import CentriollesDatasetOn
-from src.utils import get_basic_transforms, log_info
+from src.datasets import CentriollesDatasetOn, CentriollesDatasetBags, GENdataset
+from src.utils import get_basic_transforms, log_info, get_resps_transforms
 import src.implemented_models as impl_models
 
 #INFERNO IMPORTS
@@ -22,31 +22,47 @@ if __name__ == "__main__":
 
     parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
     parser.add_argument('--test', action='store_true', help='Test this model on simpler dataset')
+    parser.add_argument('--features', action='store_true', help='Representation of repsponces')
+    parser.add_argument('--mil', action='store_true', help='Continue learning on the bag lavel')
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
     parser.add_argument('--img_size', type=int, default=60, help='Size of input images')
 
     args = parser.parse_args()
     log_info( 'Params: ' + str(args))
 
-    train_tr, test_tr = get_basic_transforms()
-    if args.test:
-        train_ds = CentriollesDatasetOn(transform=train_tr, 
-                                        pos_dir='dataset/mnist/1', 
-                                        neg_dir='dataset/mnist/0', inp_size=args.img_size)
-        test_ds  = CentriollesDatasetOn(transform=test_tr , 
-                                        pos_dir='dataset/mnist/1', 
-                                        neg_dir='dataset/mnist/0', inp_size=args.img_size, train=False)
-        log_info('Test bags dataset is used')
+    
+    if args.mil:
+        train_tr, test_tr = get_resps_transforms(features=args.features)
+        if args.test:
+            train_ds = GENdataset(transform=train_tr, bags=False, crop=True)
+            test_ds  = GENdataset(train=False, transform=test_tr, bags=False, crop=True)
+            log_info('Artificial MIL data is used')
+        else:
+            train_ds = CentriollesDatasetBags(transform=train_tr,
+                                            inp_size=512, bags=False, crop=True)
+            test_ds  = CentriollesDatasetBags(train=False, transform=test_tr,
+                                            inp_size=512, bags=False, crop=True)
+            log_info('MIL dataset is used')  
     else:
-        train_ds = CentriollesDatasetOn(transform=train_tr, 
-                                        pos_dir='dataset/artificial/train_pos/', 
-                                        neg_dir='dataset/artificial/train_neg/', 
-                                        inp_size=args.img_size, all_data=True)
-        test_ds  = CentriollesDatasetOn(transform=test_tr , 
-                                        pos_dir='dataset/artificial/test_pos/', 
-                                        neg_dir='dataset/artificial/test_neg/', 
-                                        inp_size=args.img_size,  all_data=True)
-        log_info('ILC dataset is used')  
+        train_tr, test_tr = get_basic_transforms()
+        if args.test:
+            train_ds = CentriollesDatasetOn(transform=train_tr, 
+                                            pos_dir='dataset/mnist/1', 
+                                            neg_dir='dataset/mnist/0', inp_size=args.img_size)
+            test_ds  = CentriollesDatasetOn(transform=test_tr , 
+                                            pos_dir='dataset/mnist/1', 
+                                            neg_dir='dataset/mnist/0', inp_size=args.img_size, train=False)
+            log_info('Test bags dataset is used')
+        else:
+            train_ds = CentriollesDatasetOn(transform=train_tr, 
+                                            pos_dir='dataset/artificial/train_pos/', 
+                                            neg_dir='dataset/artificial/train_neg/', 
+                                            inp_size=args.img_size, all_data=True)
+            test_ds  = CentriollesDatasetOn(transform=test_tr , 
+                                            pos_dir='dataset/artificial/test_pos/', 
+                                            neg_dir='dataset/artificial/test_neg/', 
+                                            inp_size=args.img_size,  all_data=True)
+            log_info('ILC dataset is used')  
     
     train_dl = DataLoader(train_ds, batch_size=10, shuffle=True, num_workers=0)
     test_dl  = DataLoader(test_ds,  batch_size=10, shuffle=True, num_workers=0)

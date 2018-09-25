@@ -17,7 +17,12 @@ import os
 from PIL import Image
 import numpy as np
 
-from src.utils import num_flat_features
+def num_flat_features(self, x):
+    size = x.size()[1:]  # all dimensions except the batch dimension
+    num_features = 1
+    for s in size:
+        num_features *= s
+    return num_features
 
 
 ##################
@@ -177,13 +182,13 @@ class OrdCNN(nn.Module):
 
 class DenseNet(nn.Module):
     def __init__(self, growthRate, nLayers, nFc, reduction=0.5, nClasses=2, 
-                        crosscon=False, bottleneck=True, max_pool=False):
+                        crosscon=False, bottleneck=True, max_pool=False, inp_channels=1):
         super(DenseNet, self).__init__()
         self.max_pool = max_pool
 
         # First convolution layer
         nChannels = 2*growthRate
-        self.conv1 = nn.Conv2d(1, nChannels, kernel_size=3, padding=1, stride=2, bias=False)
+        self.conv1 = nn.Conv2d(inp_channels, nChannels, kernel_size=3, padding=1, stride=2, bias=False)
 
         # DenseBlocks + TransitionLayers 
         main_blocks = []
