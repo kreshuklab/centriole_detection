@@ -40,9 +40,7 @@ class GetResps(object):
         self.out_size = out_size
         self.to_torch = inftransforms.generic.AsTorchBatch(dimensionality=2)
         
-    def __call__(self, sample):
-        inp, label = sample
-    
+    def __call__(self, inp):
         img  = inp[0,:,:]
         mask = inp[1,:,:]
         mask = mask > mask.min()
@@ -82,7 +80,7 @@ class GetResps(object):
                     if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
                         resps[:, i, j] = min_feat
                     
-        return self.to_torch(resps), label
+        return self.to_torch(resps)
 
 
 def init_weights(model, ref_model):
@@ -215,7 +213,7 @@ def get_basic_transforms():
                                     inftransforms.generic.AsTorchBatch(dimensionality=2)])
     return train_tr, test_tr
 
-def get_resps_transforms():
+def get_resps_transforms(features=False):
     train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
                                     transforms.RandomHorizontalFlip(),
                                     transforms.RandomAffine(degrees  =180,
@@ -225,30 +223,12 @@ def get_resps_transforms():
                                     #inftransforms.image.ElasticTransform(alpha=100, sigma=50),
                                     inftransforms.generic.Normalize(),
                                     inftransforms.generic.AsTorchBatch(dimensionality=2),
-                                    GetResps()])
+                                    GetResps(features=features)])
 
     test_tr  = transforms.Compose([ inftransforms.image.PILImage2NumPyArray(),
                                     inftransforms.generic.Normalize(),
                                     inftransforms.generic.AsTorchBatch(dimensionality=2), 
-                                    GetResps()])
-    return train_tr, test_tr
-
-def get_respsf_transforms():
-    train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
-                                    transforms.RandomHorizontalFlip(),
-                                    transforms.RandomAffine(degrees  =180,
-                                                            translate=(0.1, 0.1),
-                                                            scale    =(0.9, 1.0)),
-                                    inftransforms.image.PILImage2NumPyArray(),
-                                    #inftransforms.image.ElasticTransform(alpha=100, sigma=50),
-                                    inftransforms.generic.Normalize(),
-                                    inftransforms.generic.AsTorchBatch(dimensionality=2),
-                                    GetResps(features=True)])
-
-    test_tr  = transforms.Compose([ inftransforms.image.PILImage2NumPyArray(),
-                                    inftransforms.generic.Normalize(),
-                                    inftransforms.generic.AsTorchBatch(dimensionality=2), 
-                                    GetResps(features=True)])
+                                    GetResps(features=features)])
     return train_tr, test_tr
 
 
