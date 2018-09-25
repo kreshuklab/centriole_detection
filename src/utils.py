@@ -21,6 +21,70 @@ import torch.nn.functional as F
 #INFERNO IMPORTS
 import inferno.io.transform as inftransforms
 
+
+from src.implemented_models import ICL_DenseNet_3fc
+from src.architectures import DenseNet
+from inferno.trainers.basic import Trainer
+
+class GetResps(object):
+    def __init__(self, features=False, out_size=28):
+        trainer = Trainer(ICL_DenseNet_3fc)
+        if torch.cuda.is_available():
+            trainer = trainer.load(from_directory='../centrioles/models/ICL_DenseNet_3fc/true_save/weights/', 
+                                   best=True)
+        else:
+            trainer = trainer.load(from_directory='../centrioles/models/ICL_DenseNet_3fc/true_save/weights/', 
+                                   best=True, map_location='cpu')
+        self.model = trainer.model
+        self.features = features
+        self.out_size = out_size
+        self.to_torch = inftransforms.generic.AsTorchBatch(dimensionality=2)
+        
+    def __call__(self, sample):
+        inp, label = sample
+    
+        img  = inp[0,:,:]
+        mask = inp[1,:,:]
+        mask = mask > mask.min()
+
+        if self.features:
+            resps = np.zeros((1280, self.out_size, self.out_size))
+        else:
+            resps = np.zeros((1, self.out_size, self.out_size))
+
+        wsize = (60, 60)
+        stride = (512 - wsize[0]) / resps.shape[1] / wsize[0]
+        os = resps.shape[1]
+        th = 0.95
+        color = (255, 0, 0)
+
+        min_alph = 1
+        w, h = img.shape
+        for i, cx in enumerate(range(0, min(w - wsize[0], int(wsize[0] * stride) * os), int(wsize[0] * stride))):
+            for j, cy in enumerate(range(0, min(h - wsize[1], int(wsize[1] * stride) * os), int(wsize[1] * stride))):
+                if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
+                    continue
+                cropped = local_autoscale_ms(img[cx:cx+wsize[0], cy:cy+wsize[1]])
+                outputs, features = self.model(cropped[None, None, :, :].float())
+                features = features[0]
+                alpha = int(float(F.softmax(outputs, dim=1)[0][1]) * 255)
+                if min_alph > alpha:
+                    min_alph = alpha
+                    min_feat = features.detach().numpy()[:,0,0]
+                if self.features:
+                    resps[:, i, j] = features.detach().numpy()[:,0,0]
+                else:
+                    resps[0, i, j] =  alpha
+        
+        if self.features:
+            for i, cx in enumerate(range(0, min(w - wsize[0], int(wsize[0] * stride) * os), int(wsize[0] * stride))):
+                for j, cy in enumerate(range(0, min(h - wsize[1], int(wsize[1] * stride) * os), int(wsize[1] * stride))):
+                    if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
+                        resps[:, i, j] = min_feat
+                    
+        return self.to_torch(resps), label
+
+
 def init_weights(model, ref_model):
     ref_params = ref_model.state_dict()
     mod_params =     model.state_dict()
@@ -150,6 +214,43 @@ def get_basic_transforms():
                                     inftransforms.generic.Normalize(),
                                     inftransforms.generic.AsTorchBatch(dimensionality=2)])
     return train_tr, test_tr
+
+def get_resps_transforms():
+    train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
+                                    transforms.RandomHorizontalFlip(),
+                                    transforms.RandomAffine(degrees  =180,
+                                                            translate=(0.1, 0.1),
+                                                            scale    =(0.9, 1.0)),
+                                    inftransforms.image.PILImage2NumPyArray(),
+                                    #inftransforms.image.ElasticTransform(alpha=100, sigma=50),
+                                    inftransforms.generic.Normalize(),
+                                    inftransforms.generic.AsTorchBatch(dimensionality=2),
+                                    GetResps()])
+
+    test_tr  = transforms.Compose([ inftransforms.image.PILImage2NumPyArray(),
+                                    inftransforms.generic.Normalize(),
+                                    inftransforms.generic.AsTorchBatch(dimensionality=2), 
+                                    GetResps()])
+    return train_tr, test_tr
+
+def get_respsf_transforms():
+    train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
+                                    transforms.RandomHorizontalFlip(),
+                                    transforms.RandomAffine(degrees  =180,
+                                                            translate=(0.1, 0.1),
+                                                            scale    =(0.9, 1.0)),
+                                    inftransforms.image.PILImage2NumPyArray(),
+                                    #inftransforms.image.ElasticTransform(alpha=100, sigma=50),
+                                    inftransforms.generic.Normalize(),
+                                    inftransforms.generic.AsTorchBatch(dimensionality=2),
+                                    GetResps(features=True)])
+
+    test_tr  = transforms.Compose([ inftransforms.image.PILImage2NumPyArray(),
+                                    inftransforms.generic.Normalize(),
+                                    inftransforms.generic.AsTorchBatch(dimensionality=2), 
+                                    GetResps(features=True)])
+    return train_tr, test_tr
+
 
     
 def log_info(message):
