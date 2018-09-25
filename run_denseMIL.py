@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 #INTERNAL IMPORTS
-from src.datasets import CentriollesDatasetBags, GENdataset
+from src.datasets import CentriollesDatasetBags, GENdataset, MnistBags
 from src.utils import get_basic_transforms, log_info, init_weights
 from src.architectures import DenseNet
 from src.implemented_models import ICL_DenseNet_3fc, ICL_MIL_DS3fc
@@ -37,6 +37,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
     parser.add_argument('--arti', action='store_true', help='Teach on the artificial data')
+    parser.add_argument('--test', action='store_true', help='Teach on the mnist data')
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
     parser.add_argument('--img_size', type=int, default=512, help='Size of input images')
     parser.add_argument('--stride', type=float, default=0.5, help='From 0 to 1')
@@ -46,7 +47,12 @@ if __name__ == "__main__":
     log_info( 'Params: ' + str(args))
 
     train_tr, test_tr = get_basic_transforms()
-    if args.arti:
+
+    if args.test:
+        train_ds = MnistBags(wsize=(args.wsize, args.wsize))
+        test_ds  = MnistBags(wsize=(args.wsize, args.wsize), train=False)
+        log_info('Minst dataset is used')
+    elif args.arti:
         train_ds = GENdataset(transform=train_tr,
                                 inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
                                 crop=True, stride=args.stride)
@@ -63,6 +69,7 @@ if __name__ == "__main__":
                                             crop=True, stride=args.stride, train=False)
         log_info('Bags dataset is used')
     
+    print('Test output: ', train_ds[0][0].shape, train_ds[0][1])
     train_dl = DataLoader(train_ds, batch_size=1, shuffle=True, num_workers=0)
     test_dl  = DataLoader(test_ds,  batch_size=1, shuffle=True, num_workers=0)
 
