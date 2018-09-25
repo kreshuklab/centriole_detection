@@ -94,11 +94,11 @@ if __name__ == "__main__":
                                 log_images_every=None,
                                 log_histograms_every=None)
 
-    logger._trainer_states_being_observed_while_training = {'training_loss',
-                                                              'training_error',
-                                                              'training_inputs',
-                                                              'training_target',
-                                                              'learning_rate'}
+    def log_hist(self, tag, values=1, step=1, bins=1000):
+        """Logs the histogram of a list/vector of values."""
+        pass
+    logger.log_histogram = log_hist
+
     trainer = Trainer(model) \
         .build_criterion('CrossEntropyLoss') \
         .build_metric('CategoricalError') \
