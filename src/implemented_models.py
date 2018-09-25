@@ -24,8 +24,8 @@ ICL_DenseNet_3fc = DenseNet(32, [6, 12, 32], [1280, 80, 16])
 ICL_MIL_DS3fc    = DenseMIL(32, [6, 12, 32], p2in=1280)
 ICL_DenseNet_4fc = DenseNet(32, [12, 22, 42], [1808, 320, 80, 4])
 
-MyDenceMILFeatures = DenseNet(32, [6, 12], [512, 80, 16], inp_channels=1280)
-MyDenceMIL = DenseNet(32, [6, 12], [512, 80, 16], inp_channels=1)
+MyDenceMILFeatures = DenseNet(32, [6, 12], [512, 80, 16], inp_channels=1280, features_needed=False)
+MyDenceMIL = DenseNet(32, [6, 12], [512, 80, 16], inp_channels=1, features_needed=False)
 
 #### VGGS ###
 CNN_512_1conv_to15x15_6fc_32filter = \

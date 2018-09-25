@@ -182,9 +182,10 @@ class OrdCNN(nn.Module):
 
 class DenseNet(nn.Module):
     def __init__(self, growthRate, nLayers, nFc, reduction=0.5, nClasses=2, 
-                        crosscon=False, bottleneck=True, max_pool=False, inp_channels=1):
+                        crosscon=False, bottleneck=True, max_pool=False, inp_channels=1, features_needed=True):
         super(DenseNet, self).__init__()
         self.max_pool = max_pool
+        self.features_needed = features_needed
 
         # First convolution layer
         nChannels = 2*growthRate
@@ -232,7 +233,10 @@ class DenseNet(nn.Module):
         # There was not anything about ReLu and BN in the original paper
         out = self.fc_part(out)
         out = self.clf(out)
-        return out, features
+        if self.features_needed:
+            return out, features
+        else:
+             return out
 
 
 
