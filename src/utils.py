@@ -36,6 +36,7 @@ class GetResps(object):
             trainer = trainer.load(from_directory='../centrioles/models/ICL_DenseNet_3fc/true_save/weights/', 
                                    best=True, map_location='cpu')
         self.model = trainer.model
+        self.model.features_needed = True
         self.features = features
         self.out_size = out_size
         self.to_torch = inftransforms.generic.AsTorchBatch(dimensionality=2)

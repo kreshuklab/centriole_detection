@@ -64,8 +64,8 @@ if __name__ == "__main__":
                                             inp_size=args.img_size,  all_data=True)
             log_info('ILC dataset is used')  
     
-    train_dl = DataLoader(train_ds, batch_size=10, shuffle=True, num_workers=0)
-    test_dl  = DataLoader(test_ds,  batch_size=10, shuffle=True, num_workers=0)
+    train_dl = DataLoader(train_ds, batch_size=4, shuffle=True, num_workers=0)
+    test_dl  = DataLoader(test_ds,  batch_size=4, shuffle=True, num_workers=0)
 
     log_info('Datasets are initialized!')
 
@@ -90,6 +90,15 @@ if __name__ == "__main__":
 
 
     # Build trainer
+    logger = TensorboardLogger(log_scalars_every=(1, 'iteration'),
+                                log_images_every=None,
+                                log_histograms_every=None)
+
+    logger._trainer_states_being_observed_while_training = {'training_loss',
+                                                              'training_error',
+                                                              'training_inputs',
+                                                              'training_target',
+                                                              'learning_rate'}
     trainer = Trainer(model) \
         .build_criterion('CrossEntropyLoss') \
         .build_metric('CategoricalError') \
@@ -98,9 +107,7 @@ if __name__ == "__main__":
         .save_every((5, 'epochs')) \
         .save_to_directory(weight_dir) \
         .set_max_num_epochs(10000) \
-        .build_logger(TensorboardLogger(log_scalars_every=(1, 'iteration'),
-                                        log_images_every=(1, 'epoch')),
-                                        log_directory=logs_dir)
+        .build_logger(logger, log_directory=logs_dir)
 
     # Bind loaders
     trainer \
