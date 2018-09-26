@@ -82,6 +82,8 @@ class GetResps(object):
                     if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
                         resps[:, i, j] = min_feat
                     
+        if torch.cuda.is_available():
+            return self.to_torch(resps).float().cuda()
         return self.to_torch(resps).float()
 
 
