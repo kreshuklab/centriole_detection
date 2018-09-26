@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
     parser.add_argument('--img_size', type=int, default=512, help='Size of input images')
     parser.add_argument('--stride', type=float, default=0.5, help='From 0 to 1')
+    parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate')
     parser.add_argument('--wsize', type=int, default=60, help='Size of windows for bagging')
 
     args = parser.parse_args()
@@ -108,18 +109,19 @@ if __name__ == "__main__":
     trainer = Trainer(model) \
         .build_criterion('CrossEntropyLoss') \
         .build_metric('CategoricalError') \
-        .build_optimizer('Adam') \
+        .build_optimizer('Adam', lr=args.lr, betas=(0.9, 0.999), eps=1e-08) \
         .validate_every((1, 'epochs')) \
         .save_every((5, 'epochs')) \
         .save_to_directory(model_dir) \
         .set_max_num_epochs(10000) \
+        .register_callback(GradChecker()) \
+        .register_callback(AutoLR(0.9, (1, 'epochs'), 
+                                    consider_improvement_with_respect_to='previous'))\
         .build_logger(TensorboardLogger(log_scalars_every=(1, 'iteration'),
                                         log_images_every=(1, 'epoch')),
                                         log_directory=logs_dir)
 
-    trainer.register_callback(GradChecker())
-    trainer.register_callback(AutoLR(0.9, (1, 'epochs'), 
-                                    consider_improvement_with_respect_to='previous'))
+
 
     # Bind loaders
     trainer \

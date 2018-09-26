@@ -9,7 +9,7 @@ TIME_LIMIT = 10
 ID         = 'default'
 MAIL_TYPE  = 'FAIL'
 
-RUNNING_COMAND = './run_denseMIL.py'
+RUNNING_COMAND = './run_ilc_inferno.py'
 ADDITIONAL_MODULES = 'module load cuDNN'
 ARGUMENTS_FOR_RUN  = ''
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     args, unknown = parser.parse_known_args()
 
-    kargs = ARGUMENTS_FOR_RUN + '--id ' + args.id + ' --model_name ' + args.model_name  + ' '  + ' '.join(unknown)
+    kargs = ARGUMENTS_FOR_RUN + ' --id ' + args.id + ' --model_name ' + args.model_name  + ' '  + ' '.join(unknown)
 
     parent_dir = 'models/{}/{}'.format(args.model_name, args.id)
     if os.path.exists(parent_dir):
