@@ -65,12 +65,16 @@ class GetResps(object):
                 if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
                     continue
                 cropped = local_autoscale_ms(img[cx:cx+wsize[0], cy:cy+wsize[1]])
-                outputs, features = self.model(cropped[None, None, :, :].float())
+                if torch.cuda.is_available():
+                    outputs, features = self.model(cropped[None, None, :, :].float().cuda())
+                else:
+                    outputs, features = self.model(cropped[None, None, :, :].float())
                 features = features[0]
                 alpha = int(float(F.softmax(outputs, dim=1)[0][1]) * 255)
                 if min_alph > alpha:
                     min_alph = alpha
                     min_feat = features.detach().numpy()[:,0,0]
+
                 if self.features:
                     resps[:, i, j] = features.detach().numpy()[:,0,0]
                 else:
@@ -82,8 +86,6 @@ class GetResps(object):
                     if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
                         resps[:, i, j] = min_feat
                     
-        if torch.cuda.is_available():
-            return self.to_torch(resps).float().cuda()
         return self.to_torch(resps).float()
 
 
