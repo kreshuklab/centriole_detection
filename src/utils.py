@@ -57,7 +57,8 @@ class GetResps(object):
         th = 0.95
         color = (255, 0, 0)
 
-        min_alph = 1
+        min_alph = 0.1
+        min_feat = np.zeros((1280))
         w, h = img.shape
         for i, cx in enumerate(range(0, min(w - wsize[0], int(wsize[0] * stride) * os), int(wsize[0] * stride))):
             for j, cy in enumerate(range(0, min(h - wsize[1], int(wsize[1] * stride) * os), int(wsize[1] * stride))):
