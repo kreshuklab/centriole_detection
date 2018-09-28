@@ -16,6 +16,7 @@ import torch
 from inferno.trainers.basic import Trainer
 from torch.utils.data import DataLoader
 from inferno.trainers.callbacks.logging.tensorboard import TensorboardLogger
+from inferno.trainers.callbacks.scheduling import AutoLR
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run learning of simple CNN implementation')
@@ -107,7 +108,9 @@ if __name__ == "__main__":
         .save_every((5, 'epochs')) \
         .save_to_directory(weight_dir) \
         .set_max_num_epochs(10000) \
-        .build_logger(logger, log_directory=logs_dir)
+        .build_logger(logger, log_directory=logs_dir) \
+        .register_callback(AutoLR(0.9, (1, 'epochs'), 
+                                    consider_improvement_with_respect_to='previous'))
 
     # Bind loaders
     trainer \
