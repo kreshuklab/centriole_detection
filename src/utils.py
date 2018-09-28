@@ -57,7 +57,7 @@ class GetResps(object):
         th = 0.95
         color = (255, 0, 0)
 
-        min_alph = 0.1
+        min_alph = 0.2
         min_feat = np.zeros((1280))
         w, h = img.shape
         for i, cx in enumerate(range(0, min(w - wsize[0], int(wsize[0] * stride) * os), int(wsize[0] * stride))):
@@ -73,10 +73,16 @@ class GetResps(object):
                 alpha = int(float(F.softmax(outputs, dim=1)[0][1]) * 255)
                 if min_alph > alpha:
                     min_alph = alpha
-                    min_feat = features.detach().numpy()[:,0,0]
+                    if torch.cuda.is_available():
+                        min_feat = features.detach().cpu().numpy()[:,0,0]
+                    else:
+                        min_feat = features.detach().numpy()[:,0,0]
 
                 if self.features:
-                    resps[:, i, j] = features.detach().numpy()[:,0,0]
+                    if torch.cuda.is_available():
+                        resps[:, i, j] = features.detach().cpu().numpy()[:,0,0]
+                    else:
+                        resps[:, i, j] = features.detach().numpy()[:,0,0]
                 else:
                     resps[0, i, j] =  alpha
         
