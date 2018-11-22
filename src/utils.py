@@ -1,3 +1,8 @@
+'''
+This module contains implementations of various functions 
+needed for research, model trainning and data preprocessing in our task.
+'''
+
 #BASIC IMPORTS
 import sys
 import numpy as np
@@ -7,7 +12,7 @@ from PIL import Image
 import math
 import random
 import scipy.ndimage.interpolation as inter
-
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -18,16 +23,27 @@ import torch
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 
-#INFERNO IMPORTS
 import inferno.io.transform as inftransforms
 
-
+#INTERNAL IMPORTS
 from src.implemented_models import ICL_DenseNet_3fc
 from src.architectures import DenseNet
 from inferno.trainers.basic import Trainer
 
 class GetResps(object):
-    def __init__(self, features=False, out_size=28):
+    '''
+    Custom pytorch transform. 
+    Generates map of responses of instance lavel classifier 
+    on sliding window along input image.
+    '''
+    def __init__(self, features: bool=False, out_size: int=28):
+        '''
+        :param features:
+            If True  -> returns map of features  for each window
+            If False -> returns map of responces for each window 
+        :param out_size: 
+            Size of output image. Influence on stride.
+        '''
         trainer = Trainer(ICL_DenseNet_3fc)
         if torch.cuda.is_available():
             trainer = trainer.load(from_directory='../centrioles/models/ICL_DenseNet_3fc/true_save/weights/', 
@@ -41,7 +57,7 @@ class GetResps(object):
         self.out_size = out_size
         self.to_torch = inftransforms.generic.AsTorchBatch(dimensionality=2)
         
-    def __call__(self, inp):
+    def __call__(self, inp: torch.Tensor) -> torch.Tensor:
         img  = inp[0,:,:]
         mask = inp[1,:,:]
         mask = mask > mask.min()
@@ -95,7 +111,15 @@ class GetResps(object):
         return self.to_torch(resps).float()
 
 
-def init_weights(model, ref_model):
+def init_weights(model: torch.nn.Module, ref_model: torch.nn.Module):
+    '''
+    Transfer all weights from the second model to the first.
+
+    :param model:
+        Torch model, weights of which should be initialized.
+    :param ref_model: 
+        Reference model, weight of which should be transfered to the model.
+    '''
     ref_params = ref_model.state_dict()
     mod_params =     model.state_dict()
 
@@ -105,7 +129,26 @@ def init_weights(model, ref_model):
 
     model.load_state_dict(mod_params)
 
-def image2bag(inp, size=(28, 28), stride=0.5, crop=False, pyramid_layers=1):
+def image2bag(inp: torch.Tensor, size: Tuple[int, int]=(28, 28), stride: float=0.5, 
+                   crop: bool=False, pyramid_layers: int=1):
+    '''
+    Convert image in type of torch.tensor to the bag of images 
+    by adding new dimension to the first position.
+
+    :param inp:
+        Input image
+    :param size: 
+        Size of instances in the bag
+    :param stride:
+        Ratio of window size on each dimension and stride in pixels
+    :param crop:
+        If True -> to the bag will be added only those windows, which
+        are fully belong to the central cell.
+        Central cell will be masked with the function 
+        get_the_central_cell_mask(default params)
+    :return: 
+        Bag of images
+    '''
     bag=[]
     if crop:
         img, mask = inp[0], inp[1]
@@ -146,15 +189,45 @@ def image2bag(inp, size=(28, 28), stride=0.5, crop=False, pyramid_layers=1):
 
 
 
-def local_autoscale(img):
+def local_autoscale(img: cv2.Mat) -> cv2.Mat:
+    '''
+    :return:
+        Linearly normilized image to the range 0 - 255
+    '''
     return np.uint8((img - img.min()) / (img.max() - img.min()) * 255)
 
-def local_autoscale_ms(img):
+def local_autoscale_ms(img: cv2.Mat) -> cv2.Mat:
+    '''
+    :return:
+        Linearly normilized image. 
+        Output image will have 0 mean and 1 std.
+    '''
     return (img - img.mean()) / img.std()
 
 
 
-def get_the_central_cell_mask(pil_image, wsize=32, gauss_ker_crop=21, cl_ker=0.02, fe_ker=0.06, debug=1):
+def get_the_central_cell_mask(pil_image: PIL.Image, wsize: int=32, gauss_ker_crop: int=21, 
+                              cl_ker: int=0.02, fe_ker: int=0.06, debug: bool=1) -> cv2.Mat:
+    '''
+    Returns mask for the centrall cell on the EM image.
+
+    :param pil_image:
+        Input image
+    :param wsize:
+        Size of last dilate (thikness of additional shell for cell)
+    :param gauss_ker_crop:
+        Kernel of Gaussian blur
+    :param cl_ker:
+        Kernel of closing operation (multiplyes on wsize).
+         Using against small holes after thresholding
+    :param fe_ker:
+        Kernel of erosion operation (multiplyes on wsize).
+        Increase it to separate cells more
+    :param debug:
+        If True -> will return all intermediate pictures.
+    :return: 
+        Binary mask of center cell
+    '''
     img = np.array(pil_image)
     bin_th = 0.9 * img.mean() / img.max() * 255
 
@@ -210,6 +283,11 @@ def get_the_central_cell_mask(pil_image, wsize=32, gauss_ker_crop=21, cl_ker=0.0
 
 
 def get_basic_transforms():
+    '''
+    :return:
+        Basic transforms for datasets. 
+        Both for train and test
+    '''
     train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
                                     transforms.RandomHorizontalFlip(),
                                     transforms.RandomAffine(degrees  =180,
@@ -226,6 +304,11 @@ def get_basic_transforms():
     return train_tr, test_tr
 
 def get_resps_transforms(features=False):
+    '''
+    :return:
+        Transforms for datasets with responce transform in the end. 
+        Both for train and test
+    '''
     train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
                                     transforms.RandomHorizontalFlip(),
                                     transforms.RandomAffine(degrees  =180,
@@ -245,11 +328,23 @@ def get_resps_transforms(features=False):
 
 
     
-def log_info(message):
+def log_info(message: str):
+    '''
+    Print specifyied string with prefix INFO
+    And performs flush of output
+    '''
     print('INFO: ' + message)
     sys.stdout.flush()
 
-def num_flat_features(self, x):
+def num_flat_features(self, x: torch.Tensor) -> int:
+    '''
+    Use this function to construct fully connected layer after squeezing.
+
+    :param x: 
+        Torch tensor before squeezing
+    :return: 
+        Number of fetures of the tensor after applying squeeze function.
+    '''
     size = x.size()[1:]  # all dimensions except the batch dimension
     num_features = 1
     for s in size:
@@ -262,7 +357,13 @@ def num_flat_features(self, x):
 ## GEN
 ####
 
-def get_centriolle(h=34, r=6, bg=60, th=1):
+def get_centriolle(h: int=34, r: int=6, bg: int=60, th: int=1) -> np.array:
+    '''
+    Returns 3D cylinder with cpecified parametrs.
+
+    :param h:
+
+    '''
     centriolle = np.zeros((bg, bg, bg), dtype=int)
     
     #bottom cup
