@@ -3,7 +3,7 @@ This module contains implementations of various
 custom layers and architectures based on pytorch framework. 
 '''
 
-#BASIC IMPORTS
+# BASIC IMPORTS
 import sys
 import math
 import os
@@ -11,7 +11,7 @@ from PIL import Image
 import numpy as np
 from typing import List
 
-#TORCH IMPORTS
+# TORCH IMPORTS
 import torch
 
 import torch.nn as nn
@@ -30,9 +30,9 @@ def num_flat_features(x: torch.Tensor) -> int:
     '''
     Use this function to construct fully connected layer after squeezing.
 
-    :param x: 
+    :param x:
         Torch tensor before squeezing
-    :return: 
+    :return:
         Number of fetures of the tensor after applying squeeze function.
     '''
     size = x.size()[1:]  # all dimensions except the batch dimension
@@ -48,15 +48,15 @@ def num_flat_features(x: torch.Tensor) -> int:
 
 def get_cnn(filters: List[int] = [512]) -> torch.nn.Sequential:
     '''
-    Constructs Convolutional Neural Network with specified number of filters. 
+    Constructs Convolutional Neural Network with specified number of filters.
     Each block of returned model is:
         Conv2d(ker=3)
         ReLu()
         MaxPool2d(ker=2)
-    
-    :param filters: 
+
+    :param filters:
         List of integers, representing number of output features for each block.
-    :return: 
+    :return:
         Pytorch model with architecture desribed above.
     '''
 
@@ -84,7 +84,8 @@ class View(nn.Module):
 
     def forward(self, x):
         return x.view(x.size(0), -1)
-    
+
+
 class ConvMaxPool(nn.Module):
     '''
     Class of united Conv2d and MaxPool layers.
@@ -103,15 +104,15 @@ class Bottleneck(nn.Module):
     '''
     Class of Bottleneck layer, describerd in the original papper of DenseNet.
     Basic unit for denseBlock, alternative to SingleLayer.
-    Does not provide resolution reduction. 
+    Does not provide resolution reduction.
     It was shown, that this unit is more preferable.
     '''
     def __init__(self, nChannels: int, growthRate: int):
         '''
-        :param nChannels: 
+        :param nChannels:
             Number of input channels
-        :param growthRate: 
-            Number of channels wich will be added to input. 
+        :param growthRate:
+            Number of channels wich will be added to input.
             I.e. num of output channels = num of input + growthRate
         '''
         super(Bottleneck, self).__init__()
@@ -129,6 +130,7 @@ class Bottleneck(nn.Module):
         out = torch.cat((x, out), 1)
         return out
 
+
 class SingleLayer(nn.Module):
     '''
     Class of SingleLayer, describerd in the original papper of DenseNet.
@@ -138,10 +140,10 @@ class SingleLayer(nn.Module):
     '''
     def __init__(self, nChannels: int, growthRate: int=12):
         '''
-        :param nChannels: 
+        :param nChannels:
             Number of input channels
-        :param growthRate: 
-            Number of channels wich will be added to input. 
+        :param growthRate:
+            Number of channels wich will be added to input.
             I.e. num of output channels = num of input + growthRate
         '''
         super(SingleLayer, self).__init__()
@@ -160,11 +162,11 @@ class TransitionLayer(nn.Module):
     Class of TransitionLayer, describerd in the original papper of DenseNet.
     Provide connection between dense blocks and reduction of tensor resolution.
     '''
-    def __init__(self, nChannels:int, reduction:float):
+    def __init__(self, nChannels: int, reduction: float):
         '''
-        :param nChannels: 
+        :param nChannels:
             Number of input channels
-        :param reduction: 
+        :param reduction:
             Ratio between output and input channels.
         '''
         super(TransitionLayer, self).__init__()
@@ -178,22 +180,23 @@ class TransitionLayer(nn.Module):
         out = F.avg_pool2d(out, 2)
         return out
 
+
 class DenseBlock(nn.Module):
     '''
     Class of DenseBlock, describerd in the original papper of DenseNet.
     '''
     def __init__(self, nChannels: int, growthRate: int, depth: int, bottleneck: bool):
         '''
-        :param nChannels: 
+        :param nChannels:
             Number of input channels
-        :param growthRate: 
-            Number of channels wich will be added to input in each basic unit. 
+        :param growthRate:
+            Number of channels wich will be added to input in each basic unit.
             I.e. num of output channels = num of input + growthRate
-        :param depth: 
+        :param depth:
             Number of basic units in this DenseBlock.
-        :param bottleneck:  
+        :param bottleneck:
             If True  -> basic unit is Bottleneck
-            If False -> basic unit is SingleLayer 
+            If False -> basic unit is SingleLayer
         '''
         super(DenseBlock, self).__init__()
         layers = []
@@ -213,8 +216,8 @@ class DenseBlock(nn.Module):
 class Print(nn.Module):
     '''
     Torch module wrapper for print.
-    Prints size of a passed tensor. 
-    Used in debug. 
+    Prints size of a passed tensor.
+    Used in debug.
     '''
     def __init__(self):
         super(Print, self).__init__()
@@ -225,14 +228,14 @@ class Print(nn.Module):
 
 
 ###############################################################################
-###                             NEW CLASS                                   ###
+#                                NEW CLASS                                    #
 ###############################################################################
 
 
 class OrdCNN(nn.Module):
     '''
     Not flexible implementation of classical CNN.
-    Better use construct_cnn function.  
+    Better use construct_cnn function.
     '''
     def __init__(self):
         super(OrdCNN, self).__init__()
@@ -246,7 +249,7 @@ class OrdCNN(nn.Module):
         self.conv6 = nn.Conv2d(16, 8, 3)
         self.conv7 = nn.Conv2d(8, 4, 3)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(64, 32) 
+        self.fc1 = nn.Linear(64, 32)
         self.fc2 = nn.Linear(32, 8)
         self.fc3 = nn.Linear(8, 2)
 
@@ -268,46 +271,44 @@ class OrdCNN(nn.Module):
         return x
 
 
-
 ###############################################################################
-###                             NEW CLASS                                   ###
+#                               NEW CLASS                                     #
 ###############################################################################
-
 
 
 class DenseNet(nn.Module):
     '''
     Implementation of DenseNet.
     '''
-    def __init__(self, growthRate: int, nLayers: List[int], nFc: List[int], reduction: float=0.5, 
-                        nClasses: int=2, crosscon: bool=False, bottleneck: bool=True, max_pool: bool=False, 
-                        inp_channels: int=1, features_needed: bool=False):
-        
+    def __init__(self, growthRate: int, nLayers: List[int], nFc: List[int], reduction: float=0.5,
+                 nClasses: int=2, crosscon: bool=False, bottleneck: bool=True, max_pool: bool=False,
+                 inp_channels: int=1, features_needed: bool=False):
+
         '''
-        :param growthRate: 
-            Number of channels wich will be added to input in each basic unit. 
+        :param growthRate:
+            Number of channels wich will be added to input in each basic unit.
             I.e. num of output channels = num of input + growthRate
-        :param nLayers: 
-            List specifying  depth of each DenseBlock. 
+        :param nLayers:
+            List specifying  depth of each DenseBlock.
             It will be constructed the same number of blocks as lenght of this list.
-        :param nFc: 
-            List specifying input channels for each fully connected layer in 
-            the classification part of the DenseNet. 
+        :param nFc:
+            List specifying input channels for each fully connected layer in
+            the classification part of the DenseNet.
             It will be constructed the same number of fc layers as lenght of this list.
-        :param reduction: 
+        :param reduction:
             Ratio between output and input channels in each Transition layer.
-        :param inp_channels: 
+        :param inp_channels:
             Number of channels of input image.
-        :param nClasses: 
+        :param nClasses:
             Number of output classes.
-        :param crosscon: 
+        :param crosscon:
             Allows skip-connections between DenseBlocks (temprory disabled)
-        :param bottleneck:  
+        :param bottleneck:
             If True  -> basic unit is Bottleneck
-            If False -> basic unit is SingleLayer 
-        :param max_pool: 
+            If False -> basic unit is SingleLayer
+        :param max_pool:
             Replace all average poolings with max pool (temprory disabled)
-        :param features_needed: 
+        :param features_needed:
             Drop features after last convolutional layer in the forward method?
         '''
         super(DenseNet, self).__init__()
@@ -318,7 +319,7 @@ class DenseNet(nn.Module):
         nChannels = 2*growthRate
         self.conv1 = nn.Conv2d(inp_channels, nChannels, kernel_size=3, padding=1, stride=2, bias=False)
 
-        # DenseBlocks + TransitionLayers 
+        # DenseBlocks + TransitionLayers
         main_blocks = []
         for i, depth in enumerate(nLayers):
             main_blocks.append(DenseBlock(nChannels, growthRate, depth, bottleneck))
@@ -340,19 +341,17 @@ class DenseNet(nn.Module):
 
         self.clf = nn.Linear(nFc[-1], nClasses)
 
-
     def forward(self, x):
         out = F.max_pool2d(self.conv1(x), 3, stride=2)
         out = self.main_blocks(out)
-        
+
         out = self.bn(out)
         # it is a global pooling, so the resolution of the image after all previous blocks should be 7x7
-        # is it ok for our part to have an avg pooling in the end? 
-        #or 7 if it is previous models
+        # is it ok for our part to have an avg pooling in the end?
+        # or 7 if it is previous models
         features = F.avg_pool2d(out, 3)
 
-
-        #for skip connections:
+        # for skip connections:
         # mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
         # mem_data = torch.cat((x, mem_data), 1)
 
@@ -364,13 +363,11 @@ class DenseNet(nn.Module):
         if self.features_needed:
             return out, features
         else:
-             return out
-
-
+            return out
 
 
 ###############################################################################
-###                             NEW CLASS                                   ###
+#                               NEW CLASS                                     #
 ###############################################################################
 
 
@@ -383,7 +380,7 @@ class CustomMIL(nn.Module):
         :param feature_extr:
             Feature extraction part. For example convolution layers.
             If None -> default feature extracor, decribed in the paper will be used.
-        :param p2in: 
+        :param p2in:
             Number of input channels after feature extraction part.
         :param dropp:
             Probability in dropuot layers (temprorary disabled).
@@ -409,10 +406,10 @@ class CustomMIL(nn.Module):
         self.feature_extractor_part2 = nn.Sequential(
             nn.Linear(self.p2in, self.L),
             nn.ReLU(),
-            #nn.Dropout(dropp),
+            # nn.Dropout(dropp),
             nn.Linear(self.L, self.L),
             nn.ReLU(),
-            #nn.Dropout(dropp)
+            # nn.Dropout(dropp)
         )
 
         self.attention = nn.Sequential(
@@ -423,7 +420,7 @@ class CustomMIL(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Linear(self.L*self.K, 2),
-            #nn.Sigmoid()
+            # nn.Sigmoid()
         )
 
     def forward(self, x):
@@ -437,53 +434,50 @@ class CustomMIL(nn.Module):
         A = torch.transpose(A, 1, 0)  # KxN
         A = F.softmax(A, dim=1)  # softmax over N
 
-        ## here all magic happens
+        # here all magic happens
         M = torch.mm(A, H)  # KxL
 
         Y_prob = self.classifier(M)
         Y_hat = torch.ge(Y_prob, 0.5).float()
 
-        #return Y_prob, Y_hat, A
+        # return Y_prob, Y_hat, A
         # return A to see responces
         return Y_prob
 
 
-
-
 ###############################################################################
-###                             NEW CLASS                                   ###
+#                               NEW CLASS                                     #
 ###############################################################################
-
 
 
 class DenseMIL(nn.Module):
     '''
     Implementation of MIL model with pretrained DenseNet as feature extreactor part.
-    Becouse of GPU RAM limitations, gradients in the DenseNet should be freezed.
-    We pretrained them on the artificial instance lavel dataset. 
+    Because of GPU RAM limitations, gradients in the DenseNet should be freezed.
+    We pretrained them on the artificial instance lavel dataset.
     Here you should repeat the same architecture of feature extractor as in pretrained model.
 
     Do not forget to call freeze_gradients method before training!
     '''
-    def __init__(self, growthRate: int, nLayers: List[int], reduction: float=0.5, nClasses: int=2, 
-                        crosscon: bool=False, bottleneck: bool=True, p2in: int=50*4*4):
+    def __init__(self, growthRate: int, nLayers: List[int], reduction: float=0.5, nClasses: int=2,
+                 crosscon: bool=False, bottleneck: bool=True, p2in: int=50*4*4):
         '''
         :param growthRate:
-            Number of channels wich will be added to input in each basic unit. 
+            Number of channels wich will be added to input in each basic unit.
             I.e. num of output channels = num of input + growthRate
-        :param nLayers: 
-            List specifying  depth of each DenseBlock. 
+        :param nLayers:
+            List specifying  depth of each DenseBlock.
             It will be constructed the same number of blocks as lenght of this list.
-        :param reduction: 
+        :param reduction:
             Ratio between output and input channels in each Transition layer.
-        :param nClasses: 
+        :param nClasses:
             Number of output classes.
-        :param crosscon: 
+        :param crosscon:
             Allows skip-connections between DenseBlocks (temprory disabled)
-        :param bottleneck:  
+        :param bottleneck:
             If True  -> basic unit is Bottleneck
             If False -> basic unit is SingleLayer
-        :param p2in: 
+        :param p2in:
             Number of input channels after feature extraction part.
         '''
         super(DenseMIL, self).__init__()
@@ -497,7 +491,7 @@ class DenseMIL(nn.Module):
         nChannels = 2*growthRate
         self.conv1 = nn.Conv2d(1, nChannels, kernel_size=3, padding=1, stride=2, bias=False)
 
-        # DenseBlocks + TransitionLayers 
+        # DenseBlocks + TransitionLayers
         main_blocks = []
         for i, depth in enumerate(nLayers):
             main_blocks.append(DenseBlock(nChannels, growthRate, depth, bottleneck))
@@ -513,10 +507,10 @@ class DenseMIL(nn.Module):
         self.feature_extractor_part2 = nn.Sequential(
             nn.Linear(self.p2in, self.L),
             nn.ReLU(),
-            #nn.Dropout(dropp),
+            # nn.Dropout(dropp),
             nn.Linear(self.L, self.L),
             nn.ReLU(),
-            #nn.Dropout(dropp)
+            # nn.Dropout(dropp)
         )
 
         self.attention = nn.Sequential(
@@ -527,17 +521,17 @@ class DenseMIL(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Linear(self.L*self.K, 2),
-            #nn.Sigmoid()
+            # nn.Sigmoid()
         )
-    
+
     def freeze_weights(self):
         '''
-        Freeze gradients in the feature extraction part. 
-        
+        Freeze gradients in the feature extraction part.
+
         Do not forget to load pretrained weights before!
         Use function init_weights from src.utils
         '''
-        ## Freeze the gradients (it worse to check it again)
+        # Freeze the gradients (it worse to check it again)
         for param in self.conv1.parameters():
             param.requires_grad = False
         for param in self.main_blocks.parameters():
@@ -549,13 +543,13 @@ class DenseMIL(nn.Module):
         x = x.squeeze(0)
         out = F.max_pool2d(self.conv1(x), 3, stride=2)
         out = self.main_blocks(out)
-        
+
         out = self.bn(out)
         # it is a global pooling, so the resolution of the image after all previous blocks should be 7x7
-        # is it ok for our part to have an avg pooling in the end? 
-        #or 7 if it is previous models
+        # is it ok for our part to have an avg pooling in the end ?
+        # or 7 if it is previous models
         H = F.avg_pool2d(out, 3)
-        
+
         H = H.view(-1, self.p2in)
         H = self.feature_extractor_part2(H)  # NxL
 
@@ -568,5 +562,5 @@ class DenseMIL(nn.Module):
         Y_prob = self.classifier(M)
         Y_hat = torch.ge(Y_prob, 0.5).float()
 
-        #return Y_prob, Y_hat, A
+        # return Y_prob, Y_hat, A
         return Y_prob

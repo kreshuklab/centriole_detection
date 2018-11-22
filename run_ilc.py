@@ -1,25 +1,25 @@
 #!/g/kreshuk/lukoianov/miniconda3/envs/inferno/bin/python3
 
-#BASIC IMPORTS
+# BASIC IMPORTS
 import argparse
 import os
 import subprocess
 import sys
 
-#INTERNAL IMPORTS
+# INTERNAL IMPORTS
 from src.datasets import CentriollesDatasetPatients, CentriollesDatasetBags, MnistBags, GENdataset, CentriollesDatasetOn
 from src.utils import get_basic_transforms, log_info
-from src.trainer import  train, validate
+from src.trainer import train, validate
 import src.implemented_models as impl_models
 
-#TORCH IMPORTS
+# TORCH IMPORTS
 import torch
 import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 
-#INFERNO IMPORTS
+# INFERNO IMPORTS
 from inferno.trainers.basic import Trainer
 from inferno.trainers.callbacks.logging.tensorboard import TensorboardLogger
 
@@ -48,36 +48,36 @@ if __name__ == "__main__":
     parser.add_argument('--save_best', action='store_false', help='Save best test model?')
 
     args = parser.parse_args()
-    log_info( 'Params: ' + str(args))
-    #log_info('GIT revision: ' + subprocess.check_output('git rev-parse HEAD', shell=True).decode("utf-8"))
+    log_info('Params: ' + str(args))
+    # log_info('GIT revision: ' + subprocess.check_output('git rev-parse HEAD', shell=True).decode("utf-8"))
 
     # DATASETS INITIALIZATION
     train_tr, test_tr = get_basic_transforms()
-    
+
     if args.test:
-        train_ds = CentriollesDatasetOn(transform=train_tr, 
-                                        pos_dir='dataset/mnist/1', 
+        train_ds = CentriollesDatasetOn(transform=train_tr,
+                                        pos_dir='dataset/mnist/1',
                                         neg_dir='dataset/mnist/0', inp_size=args.img_size)
-        test_ds  = CentriollesDatasetOn(transform=test_tr , 
-                                        pos_dir='dataset/mnist/1', 
-                                        neg_dir='dataset/mnist/0', inp_size=args.img_size, train=False)
+        test_ds = CentriollesDatasetOn(transform=test_tr,
+                                       pos_dir='dataset/mnist/1',
+                                       neg_dir='dataset/mnist/0', inp_size=args.img_size, train=False)
         log_info('Test bags dataset is used')
     else:
-        train_ds = CentriollesDatasetOn(transform=train_tr, 
-                                        pos_dir='dataset/artificial/train_pos/', 
-                                        neg_dir='dataset/artificial/train_neg/', 
+        train_ds = CentriollesDatasetOn(transform=train_tr,
+                                        pos_dir='dataset/artificial/train_pos/',
+                                        neg_dir='dataset/artificial/train_neg/',
                                         inp_size=args.img_size, all_data=True)
-        test_ds  = CentriollesDatasetOn(transform=test_tr , 
-                                        pos_dir='dataset/artificial/test_pos/', 
-                                        neg_dir='dataset/artificial/test_neg/', 
-                                        inp_size=args.img_size,  all_data=True)
-        log_info('ILC dataset is used')  
+        test_ds = CentriollesDatasetOn(transform=test_tr,
+                                       pos_dir='dataset/artificial/test_pos/',
+                                       neg_dir='dataset/artificial/test_neg/',
+                                       inp_size=args.img_size,  all_data=True)
+        log_info('ILC dataset is used')
 
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=0)
-    test_dl  = DataLoader(test_ds,  batch_size=args.batch_size, shuffle=True, num_workers=0)
-    
+    test_dl = DataLoader(test_ds,  batch_size=args.batch_size, shuffle=True, num_workers=0)
+
     log_info('Datasets are initialized!')
-    
+
     # DIRS INITIALIZATION
     exec("model = impl_models.%s" % (args.model_name))
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     curent_model_dir = os.path.join(model_dir, args.id)
     log_info('Model will be saved to %s' % (curent_model_dir))
     log_info('  + Number of params: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
-    
+
     weight_dir = os.path.join(curent_model_dir, 'weights')
     log_info('Weights will be saved to %s' % (weight_dir))
     if not os.path.exists(weight_dir):
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         os.mkdir(logs_dir)
     log_info('Logs will be saved to %s' % (logs_dir))
 
-     # TRAINING SETTINGS
+    # TRAINING SETTINGS
 
     if torch.cuda.is_available():
         log_info('Cuda will be used')
@@ -110,11 +110,12 @@ if __name__ == "__main__":
     writer = SummaryWriter(log_dir=logs_dir)
 
     criterion = nn.CrossEntropyLoss()
-    #optimizer = optim.SGD(net.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-3)
-    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd ,betas=(0.9, 0.999), eps=1e-08, amsgrad=False)
+    # optimizer = optim.SGD(net.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd,
+                           betas=(0.9, 0.999), eps=1e-08, amsgrad=False)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=args.ld)
-    
-    ## Save examples of input
+
+    # Save examples of input
     # for img in train_dl:
     #     writer.add_image('Train', img[0], 0)
     #     break
@@ -122,21 +123,21 @@ if __name__ == "__main__":
     #     writer.add_image('Test', img[0], 0)
     #     break
 
-    ## TRAINING
+    # TRAINING
     epoch_num = 0
-    best_loss  = 1e5
+    best_loss = 1e5
     while True:
-        log_info('Epoch %d satrted' %(epoch_num))
+        log_info('Epoch %d satrted' % (epoch_num))
 
         ###########
-        ## TRAIN ##
+        #  TRAIN  #
         ###########
 
         model.train()
         criterion.train()
 
         global_loss = 0.0
-    
+
         for inputs, label in train_dl:
             inputs, label = inputs.to(device), label.to(device)
 
@@ -145,35 +146,35 @@ if __name__ == "__main__":
             loss = criterion(outputs, label)
             loss.backward()
             optimizer.step()
-            
+
             global_loss += loss.item()
-        
+
         global_loss /= len(train_dl)
         loss = global_loss
         writer.add_scalar('train_loss', loss, epoch_num)
         writer.add_scalar('learning_rate', float(scheduler.get_lr()[0]), epoch_num)
         log_info('Epoch: ' + str(epoch_num) + 'train_loss: ' + str(loss) + 'lr: ' + str(float(scheduler.get_lr()[0])))
-    
+
         ################
-        ## VAlIDATION ##
+        #  VAlIDATION  #
         ################
 
         model.eval()
         criterion.eval()
 
         global_loss = 0.0
-        accuracy    = 0.0 
-        
+        accuracy = 0.0
+
         for inputs, label in test_dl:
             inputs, label = inputs.to(device), label.to(device)
 
             outputs = model(inputs)
             loss = criterion(outputs, label)
             global_loss += loss.item()
-            accuracy    += (round(float(F.softmax(outputs, dim=1)[0][0])) == float(label))
-        
+            accuracy += (round(float(F.softmax(outputs, dim=1)[0][0])) == float(label))
+
         global_loss /= len(test_dl)
-        accuracy    /= len(test_dl)
+        accuracy /= len(test_dl)
 
         loss, acc = global_loss, accuracy
         writer.add_scalar('test_loss', loss, epoch_num)
@@ -181,29 +182,24 @@ if __name__ == "__main__":
         log_info('Epoch: ' + str(epoch_num) + 'test_loss: ' + str(loss) + 'test_accuracy: ' + str(acc))
 
         ################
-        ## SAVE&CHECK ##
+        #  SAVE&CHECK  #
         ################
 
         if args.epoch != 0 and epoch_num >= args.epoch:
             log_info('Max number of epochs is exceeded. Training is finished!')
             break
-        
-        ## Save model
+
+        # Save model
         if args.save_each != 0 and epoch_num % args.save_each == 0:
             file_name = '{}.pt'.format(str(epoch_num))
             torch.save(model, os.path.join(weight_dir, file_name))
-            log_info('Model was saved in epoch number %d with validation accuracy %f and loss %f' % 
-                        (epoch_num, acc, loss))
+            log_info('Model was saved in epoch number %d with validation accuracy %f and loss %f' %
+                     (epoch_num, acc, loss))
         if loss < best_loss:
             best_loss = loss
             torch.save(model, os.path.join(weight_dir, 'best_weight.pt'))
-            log_info('Model was saved as best on epoch number %d with validation accuracy %f and loss %f' % 
-                        (epoch_num, acc, loss))
+            log_info('Model was saved as best on epoch number %d with validation accuracy %f and loss %f' %
+                     (epoch_num, acc, loss))
 
         epoch_num += 1
         scheduler.step()
-
-
-
-
-

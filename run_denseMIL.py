@@ -1,18 +1,18 @@
 #!/g/kreshuk/lukoianov/miniconda3/envs/inferno/bin/python3
 
-#BASIC IMPORTS
+# BASIC IMPORTS
 import argparse
 import os
 import subprocess
 import sys
 
-#INTERNAL IMPORTS
+# INTERNAL IMPORTS
 from src.datasets import CentriollesDatasetBags, GENdataset, MnistBags
 from src.utils import get_basic_transforms, log_info, init_weights
 from src.architectures import DenseNet
 from src.implemented_models import ICL_DenseNet_3fc, ICL_MIL_DS3fc
 
-#INFERNO IMPORTS
+# INFERNO IMPORTS
 import torch
 from inferno.trainers.basic import Trainer
 from torch.utils.data import DataLoader
@@ -20,16 +20,16 @@ from inferno.trainers.callbacks.logging.tensorboard import TensorboardLogger
 from inferno.trainers.callbacks.base import Callback
 from inferno.trainers.callbacks.scheduling import AutoLR
 
+
 class GradChecker(Callback):
     def end_of_epoch(self, **_):
         for name, value in self.trainer.model.named_parameters():
             if value.grad is not None:
                 self.trainer.logger.writer.add_histogram(name, value.data.cpu().numpy(),
-                                          self.trainer.iteration_count)
+                                                         self.trainer.iteration_count)
                 self.trainer.logger.writer.add_histogram(name + '/grad',
-                                          value.grad.data.cpu().numpy(),
-                                          self.trainer.iteration_count)
-
+                                                         value.grad.data.cpu().numpy(),
+                                                         self.trainer.iteration_count)
 
 
 if __name__ == "__main__":
@@ -45,34 +45,34 @@ if __name__ == "__main__":
     parser.add_argument('--wsize', type=int, default=60, help='Size of windows for bagging')
 
     args = parser.parse_args()
-    log_info( 'Params: ' + str(args))
+    log_info('Params: ' + str(args))
 
     train_tr, test_tr = get_basic_transforms()
 
     if args.test:
         train_ds = MnistBags(wsize=(args.wsize, args.wsize))
-        test_ds  = MnistBags(wsize=(args.wsize, args.wsize), train=False)
+        test_ds = MnistBags(wsize=(args.wsize, args.wsize), train=False)
         log_info('Minst dataset is used')
     elif args.arti:
         train_ds = GENdataset(transform=train_tr,
-                                inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
-                                crop=True, stride=args.stride)
-        test_ds  = GENdataset(transform=test_tr,
-                                inp_size=args.img_size, wsize=(args.wsize, args.wsize),
-                                crop=True, stride=args.stride, train=False)
+                              inp_size=args.img_size, wsize=(args.wsize, args.wsize),
+                              crop=True, stride=args.stride)
+        test_ds = GENdataset(transform=test_tr,
+                             inp_size=args.img_size, wsize=(args.wsize, args.wsize),
+                             crop=True, stride=args.stride, train=False)
         log_info('GEN data is used')
     else:
-        train_ds = CentriollesDatasetBags(transform=train_tr, 
-                                            inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
-                                            crop=True, stride=args.stride)
-        test_ds  = CentriollesDatasetBags(transform=test_tr, 
-                                            inp_size=args.img_size, wsize=(args.wsize, args.wsize), 
-                                            crop=True, stride=args.stride, train=False)
+        train_ds = CentriollesDatasetBags(transform=train_tr,
+                                          inp_size=args.img_size, wsize=(args.wsize, args.wsize),
+                                          crop=True, stride=args.stride)
+        test_ds = CentriollesDatasetBags(transform=test_tr,
+                                         inp_size=args.img_size, wsize=(args.wsize, args.wsize),
+                                         crop=True, stride=args.stride, train=False)
         log_info('Bags dataset is used')
-    
+
     print('Test output: ', train_ds[0][0].shape, train_ds[0][1])
     train_dl = DataLoader(train_ds, batch_size=1, shuffle=True, num_workers=0)
-    test_dl  = DataLoader(test_ds,  batch_size=1, shuffle=True, num_workers=0)
+    test_dl = DataLoader(test_ds,  batch_size=1, shuffle=True, num_workers=0)
 
     log_info('Datasets are initialized!')
 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     init_weights(model, ref_model)
     model.freeze_weights()
 
-    ### DIRS AND MODEL
+    # DIRS AND MODEL
     model_dir = os.path.join('models', args.model_name)
     curent_model_dir = os.path.join(model_dir, args.id)
     log_info('Model will be saved to %s' % (curent_model_dir))
@@ -104,7 +104,6 @@ if __name__ == "__main__":
         os.mkdir(logs_dir)
     log_info('Logs will be saved to %s' % (logs_dir))
 
-
     # Build trainer
     trainer = Trainer(model) \
         .build_criterion('CrossEntropyLoss') \
@@ -115,13 +114,11 @@ if __name__ == "__main__":
         .save_to_directory(model_dir) \
         .set_max_num_epochs(10000) \
         .register_callback(GradChecker()) \
-        .register_callback(AutoLR(0.9, (1, 'epochs'), 
-                                    consider_improvement_with_respect_to='previous'))\
+        .register_callback(AutoLR(0.9, (1, 'epochs'),
+                           consider_improvement_with_respect_to='previous'))\
         .build_logger(TensorboardLogger(log_scalars_every=(1, 'iteration'),
                                         log_images_every=(1, 'epoch')),
-                                        log_directory=logs_dir)
-
-
+                      log_directory=logs_dir)
 
     # Bind loaders
     trainer \

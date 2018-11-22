@@ -1,9 +1,9 @@
 '''
-This module contains implementations of various functions 
+This module contains implementations of various functions
 needed for research, model trainning and data preprocessing in our task.
 '''
 
-#BASIC IMPORTS
+# BASIC IMPORTS
 import sys
 import numpy as np
 from scipy import ndimage
@@ -18,48 +18,49 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d import Axes3D
 
-#TORCH IMPORTS
+# TORCH IMPORTS
 import torch
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 
 import inferno.io.transform as inftransforms
 
-#INTERNAL IMPORTS
+# INTERNAL IMPORTS
 from src.implemented_models import ICL_DenseNet_3fc
 from src.architectures import DenseNet
 from inferno.trainers.basic import Trainer
 
+
 class GetResps(object):
     '''
-    Custom pytorch transform. 
-    Generates map of responses of instance lavel classifier 
+    Custom pytorch transform.
+    Generates map of responses of instance lavel classifier
     on sliding window along input image.
     '''
     def __init__(self, features: bool=False, out_size: int=28):
         '''
         :param features:
             If True  -> returns map of features  for each window
-            If False -> returns map of responces for each window 
-        :param out_size: 
+            If False -> returns map of responces for each window
+        :param out_size:
             Size of output image. Influence on stride.
         '''
         trainer = Trainer(ICL_DenseNet_3fc)
         if torch.cuda.is_available():
-            trainer = trainer.load(from_directory='../centrioles/models/ICL_DenseNet_3fc/true_save/weights/', 
+            trainer = trainer.load(from_directory='../centrioles/models/ICL_DenseNet_3fc/true_save/weights/',
                                    best=True)
         else:
-            trainer = trainer.load(from_directory='../centrioles/models/ICL_DenseNet_3fc/true_save/weights/', 
+            trainer = trainer.load(from_directory='../centrioles/models/ICL_DenseNet_3fc/true_save/weights/',
                                    best=True, map_location='cpu')
         self.model = trainer.model
         self.model.features_needed = True
         self.features = features
         self.out_size = out_size
         self.to_torch = inftransforms.generic.AsTorchBatch(dimensionality=2)
-        
+
     def __call__(self, inp: torch.Tensor) -> torch.Tensor:
-        img  = inp[0,:,:]
-        mask = inp[1,:,:]
+        img = inp[0, :, :]
+        mask = inp[1, :, :]
         mask = mask > mask.min()
 
         if self.features:
@@ -90,24 +91,25 @@ class GetResps(object):
                 if min_alph > alpha:
                     min_alph = alpha
                     if torch.cuda.is_available():
-                        min_feat = features.detach().cpu().numpy()[:,0,0]
+                        min_feat = features.detach().cpu().numpy()[:, 0, 0]
                     else:
-                        min_feat = features.detach().numpy()[:,0,0]
+                        min_feat = features.detach().numpy()[:, 0, 0]
 
                 if self.features:
                     if torch.cuda.is_available():
-                        resps[:, i, j] = features.detach().cpu().numpy()[:,0,0]
+                        resps[:, i, j] = features.detach().cpu().numpy()[:, 0, 0]
                     else:
-                        resps[:, i, j] = features.detach().numpy()[:,0,0]
+                        resps[:, i, j] = features.detach().numpy()[:, 0, 0]
                 else:
-                    resps[0, i, j] =  alpha
-        
+                    resps[0, i, j] = alpha
+
         if self.features:
             for i, cx in enumerate(range(0, min(w - wsize[0], int(wsize[0] * stride) * os), int(wsize[0] * stride))):
-                for j, cy in enumerate(range(0, min(h - wsize[1], int(wsize[1] * stride) * os), int(wsize[1] * stride))):
+                for j, cy in enumerate(range(0, min(h - wsize[1],
+                                             int(wsize[1] * stride) * os), int(wsize[1] * stride))):
                     if mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
                         resps[:, i, j] = min_feat
-                    
+
         return self.to_torch(resps).float()
 
 
@@ -117,11 +119,11 @@ def init_weights(model: torch.nn.Module, ref_model: torch.nn.Module):
 
     :param model:
         Torch model, weights of which should be initialized.
-    :param ref_model: 
+    :param ref_model:
         Reference model, weight of which should be transfered to the model.
     '''
     ref_params = ref_model.state_dict()
-    mod_params =     model.state_dict()
+    mod_params = model.state_dict()
 
     for name1 in ref_params:
         if name1 in mod_params:
@@ -129,30 +131,31 @@ def init_weights(model: torch.nn.Module, ref_model: torch.nn.Module):
 
     model.load_state_dict(mod_params)
 
-def image2bag(inp: torch.Tensor, size: Tuple[int, int]=(28, 28), stride: float=0.5, 
-                   crop: bool=False, pyramid_layers: int=1):
+
+def image2bag(inp: torch.Tensor, size: Tuple[int, int]=(28, 28), stride: float=0.5,
+              crop: bool=False, pyramid_layers: int=1):
     '''
-    Convert image in type of torch.tensor to the bag of images 
+    Convert image in type of torch.tensor to the bag of images
     by adding new dimension to the first position.
 
     :param inp:
         Input image
-    :param size: 
+    :param size:
         Size of instances in the bag
     :param stride:
         Ratio of window size on each dimension and stride in pixels
     :param crop:
         If True -> to the bag will be added only those windows, which
         are fully belong to the central cell.
-        Central cell will be masked with the function 
+        Central cell will be masked with the function
         get_the_central_cell_mask(default params)
-    :return: 
+    :return:
         Bag of images
     '''
-    bag=[]
+    bag = []
     if crop:
         img, mask = inp[0], inp[1]
-        mask  = np.array(mask != mask.min())
+        mask = np.array(mask != mask.min())
         w, h = img.size()
     else:
         img = inp[0]
@@ -173,7 +176,7 @@ def image2bag(inp: torch.Tensor, size: Tuple[int, int]=(28, 28), stride: float=0
                 boxes.append((cx, cy, wsize[0], wsize[1]))
                 bag.append(cropped)
 
-        ## If bag is empty – repeat everything without cropping
+        # If bag is empty – repeat everything without cropping
         if len(bag) == 0:
             for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
                 for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
@@ -181,12 +184,11 @@ def image2bag(inp: torch.Tensor, size: Tuple[int, int]=(28, 28), stride: float=0
                     cropped = local_autoscale_ms(cropped)[None, :, :]
                     boxes.append((cx, cy, wsize[0], wsize[1]))
                     bag.append(cropped)
-                    
+
         wsize = (int(1.4 * wsize[0]), int(1.4 * wsize[1]))
         pyramid_layers -= 1
-    
-    return torch.stack(bag), boxes
 
+    return torch.stack(bag), boxes
 
 
 def local_autoscale(img: cv2.Mat) -> cv2.Mat:
@@ -196,14 +198,14 @@ def local_autoscale(img: cv2.Mat) -> cv2.Mat:
     '''
     return np.uint8((img - img.min()) / (img.max() - img.min()) * 255)
 
+
 def local_autoscale_ms(img: cv2.Mat) -> cv2.Mat:
     '''
     :return:
-        Linearly normilized image. 
+        Linearly normilized image.
         Output image will have 0 mean and 1 std.
     '''
     return (img - img.mean()) / img.std()
-
 
 
 def get_the_central_cell_mask(pil_image: PIL.Image, wsize: int=32, gauss_ker_crop: int=21, 
@@ -225,7 +227,7 @@ def get_the_central_cell_mask(pil_image: PIL.Image, wsize: int=32, gauss_ker_cro
         Increase it to separate cells more
     :param debug:
         If True -> will return all intermediate pictures.
-    :return: 
+    :return:
         Binary mask of center cell
     '''
     img = np.array(pil_image)
@@ -236,21 +238,21 @@ def get_the_central_cell_mask(pil_image: PIL.Image, wsize: int=32, gauss_ker_cro
     fe_ker = int(fe_ker * (h + w) / 2)
 
     img = cv2.GaussianBlur(img, (3, 3), 0)
-    
+
     blured = cv2.GaussianBlur(img, (gauss_ker_crop, gauss_ker_crop), 0)
     ret, bins = cv2.threshold(blured, bin_th, 255, cv2.THRESH_BINARY_INV)
-    
-    close_ker = np.ones((cl_ker, cl_ker),np.uint8)
+
+    close_ker = np.ones((cl_ker, cl_ker), np.uint8)
     bins = cv2.morphologyEx(bins, cv2.MORPH_CLOSE, close_ker)
-    fer_ker = np.ones((fe_ker, fe_ker),np.uint8)
+    fer_ker = np.ones((fe_ker, fe_ker), np.uint8)
     bins = cv2.morphologyEx(bins, cv2.MORPH_ERODE, fer_ker)
-    
+
     filled = ndimage.binary_fill_holes(bins).astype(np.uint8) * 255
-    
+
     filled = cv2.morphologyEx(filled, cv2.MORPH_DILATE, fer_ker)
-    
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(filled, 4, cv2.CV_32S)       
-    
+
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(filled, 4, cv2.CV_32S)
+
     centr_num = -1
     for i in range(len(stats[1:])):
         cx, cy, cw, ch, ca = stats[i + 1]
@@ -261,15 +263,15 @@ def get_the_central_cell_mask(pil_image: PIL.Image, wsize: int=32, gauss_ker_cro
             continue
         if centr_num != -1:
             print('Error: Two centred cells!')
-            #return img
+            # return img
         centr_num = i + 1
-    
+
     if centr_num == -1:
         return np.ones((h, w), np.uint8)
     filtered_labels = (labels == centr_num).astype(np.uint8)
-    
+
     closed = filtered_labels
-    last_ker = np.ones((wsize, wsize),np.uint8)
+    last_ker = np.ones((wsize, wsize), np.uint8)
     closed = cv2.morphologyEx(closed, cv2.MORPH_DILATE, last_ker)
 
     # if debug:
@@ -281,53 +283,52 @@ def get_the_central_cell_mask(pil_image: PIL.Image, wsize: int=32, gauss_ker_cro
     return closed
 
 
-
 def get_basic_transforms():
     '''
     :return:
-        Basic transforms for datasets. 
+        Basic transforms for datasets.
         Both for train and test
     '''
-    train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
-                                    transforms.RandomHorizontalFlip(),
-                                    transforms.RandomAffine(degrees  =180,
-                                                            translate=(0.1, 0.1),
-                                                            scale    =(0.9, 1.0)),
-                                    inftransforms.image.PILImage2NumPyArray(),
-                                    #inftransforms.image.ElasticTransform(alpha=100, sigma=50),
-                                    inftransforms.generic.Normalize(),
-                                    inftransforms.generic.AsTorchBatch(dimensionality=2)])
+    train_tr = transforms.Compose([transforms.RandomVerticalFlip(),
+                                   transforms.RandomHorizontalFlip(),
+                                   transforms.RandomAffine(degrees=180,
+                                                           translate=(0.1, 0.1),
+                                                           scale=(0.9, 1.0)),
+                                   inftransforms.image.PILImage2NumPyArray(),
+                                   # inftransforms.image.ElasticTransform(alpha=100, sigma=50),
+                                   inftransforms.generic.Normalize(),
+                                   inftransforms.generic.AsTorchBatch(dimensionality=2)])
 
-    test_tr  = transforms.Compose([ inftransforms.image.PILImage2NumPyArray(),
-                                    inftransforms.generic.Normalize(),
-                                    inftransforms.generic.AsTorchBatch(dimensionality=2)])
+    test_tr = transforms.Compose([inftransforms.image.PILImage2NumPyArray(),
+                                  inftransforms.generic.Normalize(),
+                                  inftransforms.generic.AsTorchBatch(dimensionality=2)])
     return train_tr, test_tr
+
 
 def get_resps_transforms(features=False):
     '''
     :return:
-        Transforms for datasets with responce transform in the end. 
+        Transforms for datasets with responce transform in the end.
         Both for train and test
     '''
-    train_tr = transforms.Compose([ transforms.RandomVerticalFlip(),
-                                    transforms.RandomHorizontalFlip(),
-                                    transforms.RandomAffine(degrees  =180,
-                                                            translate=(0.1, 0.1),
-                                                            scale    =(0.9, 1.0)),
-                                    inftransforms.image.PILImage2NumPyArray(),
-                                    #inftransforms.image.ElasticTransform(alpha=100, sigma=50),
-                                    inftransforms.generic.Normalize(),
-                                    inftransforms.generic.AsTorchBatch(dimensionality=2),
-                                    GetResps(features=features)])
+    train_tr = transforms.Compose([transforms.RandomVerticalFlip(),
+                                   transforms.RandomHorizontalFlip(),
+                                   transforms.RandomAffine(degrees=180,
+                                                           translate=(0.1, 0.1),
+                                                           scale=(0.9, 1.0)),
+                                   inftransforms.image.PILImage2NumPyArray(),
+                                   # inftransforms.image.ElasticTransform(alpha=100, sigma=50),
+                                   inftransforms.generic.Normalize(),
+                                   inftransforms.generic.AsTorchBatch(dimensionality=2),
+                                   GetResps(features=features)])
 
-    test_tr  = transforms.Compose([ inftransforms.image.PILImage2NumPyArray(),
-                                    inftransforms.generic.Normalize(),
-                                    inftransforms.generic.AsTorchBatch(dimensionality=2), 
-                                    GetResps(features=features)])
+    test_tr = transforms.Compose([inftransforms.image.PILImage2NumPyArray(),
+                                  inftransforms.generic.Normalize(),
+                                  inftransforms.generic.AsTorchBatch(dimensionality=2),
+                                  GetResps(features=features)])
     return train_tr, test_tr
 
 
-    
 def log_info(message: str):
     '''
     Print specifyied string with prefix INFO
@@ -336,13 +337,14 @@ def log_info(message: str):
     print('INFO: ' + message)
     sys.stdout.flush()
 
+
 def num_flat_features(self, x: torch.Tensor) -> int:
     '''
     Use this function to construct fully connected layer after squeezing.
 
-    :param x: 
+    :param x:
         Torch tensor before squeezing
-    :return: 
+    :return:
         Number of fetures of the tensor after applying squeeze function.
     '''
     size = x.size()[1:]  # all dimensions except the batch dimension
@@ -352,10 +354,9 @@ def num_flat_features(self, x: torch.Tensor) -> int:
     return num_features
 
 
-
-####
-## GEN
-####
+# ###
+# GEN
+# ###
 
 def get_centriolle(h: int=34, r: int=6, bg: int=60, th: int=1) -> np.array:
     '''
@@ -365,13 +366,13 @@ def get_centriolle(h: int=34, r: int=6, bg: int=60, th: int=1) -> np.array:
 
     '''
     centriolle = np.zeros((bg, bg, bg), dtype=int)
-    
-    #bottom cup
+
+    # bottom cup
     for x in range(-r, r):
         yb = int(math.sqrt(r * r - x * x))
         for y in range(-yb, yb):
             centriolle[int(bg/2) + x, int(bg/2) + y, int(bg/2 - h/2)] = 1
-    #walls
+    # walls
     for z in range(int(bg/2 - h/2), int(bg/2 + h/2)):
         for x in range(-r, r):
             y = int(math.sqrt(r * r - x * x))
@@ -381,8 +382,8 @@ def get_centriolle(h: int=34, r: int=6, bg: int=60, th: int=1) -> np.array:
             x = int(math.sqrt(r * r - y * y))
             centriolle[int(bg/2) + x, int(bg/2) + y, z] = 1
             centriolle[int(bg/2) - x, int(bg/2) + y, z] = 1
-            
-    #thickness
+
+    # thickness
     for i in range(int((th - 1) / 2)):
         ncentriolle = centriolle.copy()
         for x in range(1, bg-1):
@@ -393,45 +394,49 @@ def get_centriolle(h: int=34, r: int=6, bg: int=60, th: int=1) -> np.array:
         centriolle = ncentriolle.copy()
     return centriolle
 
+
 def get_random_projection(shape, depth=10, min_sum=400, sg=5):
     '''
     Args:
         depth:  depth of accumulation
     '''
-    gb = int(shape.shape[0] /2)
+    gb = int(shape.shape[0] / 2)
     angle_1 = random.randint(0, 360)
     angle_2 = random.randint(0, 360)
     angle_3 = random.randint(0, 360)
-    shape = inter.rotate(shape, angle_1, axes=(1,2))
-    shape = inter.rotate(shape, angle_2, axes=(0,2))
-    shape = inter.rotate(shape, angle_3, axes=(0,1))
-    h, w, c= shape.shape
+    shape = inter.rotate(shape, angle_1, axes=(1, 2))
+    shape = inter.rotate(shape, angle_2, axes=(0, 2))
+    shape = inter.rotate(shape, angle_3, axes=(0, 1))
+    h, w, c = shape.shape
     shape = shape[int(h/2) - gb:int(h/2) + gb, int(w/2) - gb:int(w/2) + gb, int(c/2) - gb:int(c/2) + gb]
-    
+
     proj = np.zeros([2*gb, 2*gb])
     while proj.sum() < min_sum:
         height = random.randint(0, shape.shape[2] - depth)
         for x in range(shape.shape[0]):
             for y in range(shape.shape[1]):
-                proj[x,y] = shape[x, y, height:min(height + depth, shape.shape[2])].sum()
+                proj[x, y] = shape[x, y, height:min(height + depth, shape.shape[2])].sum()
 
-    return cv2.GaussianBlur(proj,(sg,sg),0)
-    
+    return cv2.GaussianBlur(proj, (sg, sg), 0)
+
+
 def show_3d_shape(shape):
-    z,y,x = shape.nonzero()
-    
+    z, y, x = shape.nonzero()
+
     fig = plt.figure(figsize=(4, 4))
     ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(x, y, -z, zdir='z', c= 'red')
+    ax.scatter(x, y, -z, zdir='z', c='red')
+
 
 def show_2d_slice(sl, size=2):
     if type(sl) == np.ndarray:
         if len(sl.shape) == 3:
-            sl = sl[:,:,0]
+            sl = sl[:, :, 0]
     elif len(sl.size()) == 3:
-        sl = sl[0,:,:]
+        sl = sl[0, :, :]
     fig = plt.figure(figsize=(size, size))
     plt.imshow(sl, interpolation='nearest', cmap='gray')
+
 
 def weighted_rand(weights):
     value = np.random.random() * np.array(weights).sum()
@@ -441,25 +446,28 @@ def weighted_rand(weights):
         ind += 1
     return ind
 
+
 def get_masked_std(img, mask):
     mask = mask > 0
-    return np.nanstd (np.where(mask * img !=0, mask * img ,np.nan))
+    return np.nanstd(np.where(mask * img != 0, mask * img, np.nan))
+
 
 def check_app_br(img, mask, extr):
     bf = (mask > 0).sum()
     mask = (img > extr * mask) * (mask > 0)
     return mask.sum() == bf
 
+
 def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=0.1, debug=False, one=False):
-    img, mask = inp[:,:,0], inp[:,:,1]
+    img, mask = inp[:, :, 0], inp[:, :, 1]
     pil_mask = Image.fromarray(mask)
     mask = np.array(mask != mask.min())
     w, h = img.shape
-    
-    gmean = np.nanmean(np.where(mask * img !=0, mask * img ,np.nan))
-    gstd  = get_masked_std(img, mask)
+
+    gmean = np.nanmean(np.where(mask * img != 0, mask * img, np.nan))
+    gstd = get_masked_std(img, mask)
     g5per = np.percentile(img, 2)
-    
+
     boxes = []
     wsize = proj.shape
 
@@ -480,36 +488,39 @@ def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=
             rx, ry = min(w, mx + int(wx * 0.8)), min(h, my + int(wy * 0.8))
             return Image.fromarray(img[lx:rx, ly:ry]), 0
         return img, 0
-    
-    if one and np.random.randint(0,2) == 0 :
+
+    if one and np.random.randint(0, 2) == 0:
         weights = [1 for cx, cy, wx, wy in boxes]
         cx, cy, wx, wy = boxes[weighted_rand(weights)]
-    
+
         mx, my = int(cx + wx/2), int(cy + wy/2)
         lx, ly = max(0, mx - wx), max(0, my - wy)
         rx, ry = min(w, mx + wx), min(h, my + wy)
         return Image.fromarray(img[lx:rx, ly:ry]), 0
 
-    weights = [1 / (float(img[cx:cx+wx, cy:cy+wy].std()) ** 6) if check_app_br(img[cx:cx+wx, cy:cy+wy], proj, gstd * alpha) else 0 for cx, cy, wx, wy in boxes]
-    
+    weights = [1 / (float(img[cx:cx+wx, cy:cy+wy].std()) ** 6)
+               if check_app_br(img[cx:cx+wx, cy:cy+wy], proj, gstd * alpha) else 0 for cx, cy, wx, wy in boxes]
+
 #     if debug:
 #         timg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 #         for i in range(100):
 #             cx, cy, wx, wy = boxes[weighted_rand(weights)]
 #             color = (255, 0, 0)
 #             alpha = 0.05
-#             timg = cv2.addWeighted(timg, 1.0 - alpha, cv2.rectangle(timg.copy(), (cy,cx), (cy+wy, cx+wx), color), alpha, 0.0)
+#             timg = cv2.addWeighted(timg, 1.0 - alpha, cv2.rectangle(timg.copy(), (cy,cx),
+#                                   (cy+wy, cx+wx), color), alpha, 0.0)
 #         show_2d_slice(timg, 12)
-        
+
     cx, cy, wx, wy = boxes[weighted_rand(weights)]
     if debug:
         color = (255, 0, 0)
         alpha = 0.5
-        img = cv2.addWeighted(img, 1.0 - alpha, cv2.rectangle(img.copy(), (cy,cx), (cy+wy, cx+wx), color), alpha, 0.0)
-    
+        img = cv2.addWeighted(img, 1.0 - alpha, cv2.rectangle(img.copy(), (cy, cx), (cy+wy, cx+wx), color), alpha, 0.0)
+
     for x in range(wx):
         for y in range(wy):
-            img[cx + x, cy + y] = max(g5per, img[cx + x, cy + y] - gstd * alpha * proj[x, y] * (np.random.random() / 5 + 0.9))
+            img[cx + x, cy + y] = max(g5per, img[cx + x, cy + y] -
+                                      gstd * alpha * proj[x, y] * (np.random.random() / 5 + 0.9))
 #             if proj[x, y] > 0:
 #                 img[cx + x, cy + y] = max(0, int(gmean * (1 - gstd * proj[x, y] / 255 * (1 - alpha))))
 
@@ -518,8 +529,8 @@ def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=
         lx, ly = max(0, mx - wx), max(0, my - wy)
         rx, ry = min(w, mx + wx), min(h, my + wy)
         return Image.fromarray(img[lx:rx, ly:ry]), 1
-    
-    pil_img  = Image.fromarray(img)
+
+    pil_img = Image.fromarray(img)
     rot_mask = Image.new('L', (w, h), (1))
-    ret_img  = Image.merge("RGB", [pil_img, pil_mask, rot_mask])
+    ret_img = Image.merge("RGB", [pil_img, pil_mask, rot_mask])
     return ret_img, 1

@@ -18,9 +18,8 @@ import numpy as np
 class CentriollesDatasetOn(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, pos_dir='dataset/positives',
-                       neg_dir='dataset/negatives', 
-                all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=2048):
+    def __init__(self, pos_dir='dataset/positives', neg_dir='dataset/negatives',
+                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=2048):
         """
         Args:
             pos_sample_dir (string): Path to the directory with all positive samples
@@ -31,7 +30,7 @@ class CentriollesDatasetOn(Dataset):
         self.samples = []
         self.classes = []
         self.transform = transform
-        
+
         def get_img_names(dir_name):
             img_names = [f for f in os.listdir(dir_name) if f.endswith('.png')]
             if all_data:
@@ -46,18 +45,17 @@ class CentriollesDatasetOn(Dataset):
                 img_names = img_names[delimetr:]
             return img_names
 
-        
-        ## Positive samples
+        # Positive samples
         for img_name in get_img_names(pos_dir):
             im = Image.open(os.path.join(pos_dir, img_name)).convert('L')
             im.load()
             im = im.resize((inp_size, inp_size), Image.ANTIALIAS)
-            
+
             self.samples.append(im.copy())
             self.classes.append(1)
             im.close()
-            
-        ## Negative samples
+
+        # Negative samples
         for img_name in get_img_names(neg_dir):
             im = Image.open(os.path.join(neg_dir, img_name)).convert('L')
             im.load()
@@ -73,32 +71,26 @@ class CentriollesDatasetOn(Dataset):
         if self.transform:
             return self.transform(self.samples[idx]).float(), self.classes[idx]
         return self.samples[idx].float(), self.classes[idx]
-    
+
     def class_balance(self):
         return np.sum(self.classes) / len(self.classes)
 
 
-
-
-
 ###############################################################################
-###                             NEW CLASS                                   ###
+#                               NEW CLASS                                     #
 ###############################################################################
-
-
-
 
 
 class CentriollesDatasetPatients(Dataset):
     """Centriolles dataset."""
 
     def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/filtered',
-                all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=2048):
+                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=2048):
         self.samples = []
         self.classes = []
         self.patient = []
         self.transform = transform
-        
+
         def get_img_names(dir_name):
             img_names = [f for f in os.listdir(dir_name) if f.endswith('.png')]
             if all_data:
@@ -113,8 +105,7 @@ class CentriollesDatasetPatients(Dataset):
                 img_names = img_names[delimetr:]
             return img_names
 
-        
-        ## Positive samples
+        # Positive samples
         for num in nums:
 
             pos_dir = os.path.join(main_dir, str(num) + '_centrioles')
@@ -129,7 +120,7 @@ class CentriollesDatasetPatients(Dataset):
                 self.patient.append(num)
                 im.close()
 
-            ## Negative samples
+            # Negative samples
             for img_name in get_img_names(neg_dir):
                 im = Image.open(os.path.join(neg_dir, img_name)).convert('L')
                 im.load()
@@ -146,25 +137,25 @@ class CentriollesDatasetPatients(Dataset):
         if self.transform:
             return self.transform(self.samples[idx]).float(), self.classes[idx]
         return self.samples[idx].float(), self.classes[idx]
-    
+
     def class_balance(self):
         return np.sum(self.classes) / len(self.classes)
 
     def class_balance_for_patients(self):
         positives = {}
-        total     = {}
+        total = {}
         for i, num in enumerate(self.patient):
             if num not in positives:
                 positives[num] = 0.0
-                total[num]     = 0.0
+                total[num] = 0.0
             positives[num] += self.classes[i]
-            total[num]     += 1
+            total[num] += 1
         for num in positives:
             positives[num] = positives[num] / total[num]
         return positives
 
 ###############################################################################
-###                             NEW CLASS                                   ###
+#                               NEW CLASS                                     #
 ###############################################################################
 
 
@@ -172,16 +163,16 @@ class CentriollesDatasetBags(Dataset):
     """Centriolles dataset."""
 
     def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/filtered',
-                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512, wsize=(32, 32), 
+                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=512, wsize=(32, 32),
                  stride=0.5, crop=False, pyramid_layers=1, bags=True):
         self.samples = []
         self.classes = []
         self.patient = []
         self.transform = transform
         self.name = []
-        self.wsize = wsize 
+        self.wsize = wsize
         self.stride = stride
-        self.bags=bags
+        self.bags = bags
         self.crop = crop
         self.pyramid_layers = pyramid_layers
 
@@ -214,14 +205,13 @@ class CentriollesDatasetBags(Dataset):
                 img_names = img_names[delimetr:]
             return img_names
 
-        
-        ## Positive samples
+        # Positive samples
         for num in nums:
 
             pos_dir = os.path.join(main_dir, str(num) + '_centrioles')
             neg_dir = os.path.join(main_dir, str(num) + '_nocentrioles')
 
-            ## Positive samples
+            # Positive samples
             for img_name in get_img_names(pos_dir):
                 self.name.append(os.path.join(pos_dir, img_name))
                 img = get_img(self.name[-1])
@@ -229,14 +219,13 @@ class CentriollesDatasetBags(Dataset):
                 self.classes.append(1)
                 self.patient.append(num)
 
-            ## Negative sampless
+            # Negative sampless
             for img_name in get_img_names(neg_dir):
                 self.name.append(os.path.join(neg_dir, img_name))
                 img = get_img(self.name[-1])
                 self.samples.append(img)
                 self.classes.append(0)
                 self.patient.append(num)
-
 
     def __len__(self):
         return len(self.samples)
@@ -248,7 +237,8 @@ class CentriollesDatasetBags(Dataset):
             images, labels = self.samples[idx], self.classes[idx]
 
         if self.bags:
-            images, _ = image2bag(images.float(), size=self.wsize, stride=self.stride, crop=self.crop, pyramid_layers=self.pyramid_layers)
+            images, _ = image2bag(images.float(), size=self.wsize, stride=self.stride,
+                                  crop=self.crop, pyramid_layers=self.pyramid_layers)
         return images, labels
 
     def class_balance(self):
@@ -256,21 +246,21 @@ class CentriollesDatasetBags(Dataset):
 
     def class_balance_for_patients(self):
         positives = {}
-        total     = {}
+        total = {}
         for i, num in enumerate(self.patient):
             if num not in positives:
                 positives[num] = 0.0
-                total[num]     = 0.0
+                total[num] = 0.0
             positives[num] += self.classes[i]
-            total[num]     += 1
+            total[num] += 1
         for num in positives:
             positives[num] = positives[num] / total[num]
         return positives
 
 
-
 class MnistBags(data_utils.Dataset):
-    def __init__(self, target_number=9, mean_bag_length=10, var_bag_length=2, num_bag=250, seed=1, train=True, wsize=(28, 28),):
+    def __init__(self, target_number=9, mean_bag_length=10, var_bag_length=2,
+                 num_bag=250, seed=1, train=True, wsize=(28, 28)):
         self.target_number = target_number
         self.mean_bag_length = mean_bag_length
         self.var_bag_length = var_bag_length
@@ -353,23 +343,23 @@ class MnistBags(data_utils.Dataset):
 
 
 ###############################################################################
-###                             NEW CLASS                                   ###
+#                               NEW CLASS                                     #
 ###############################################################################
 
 
 class GENdataset(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], 
+    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021],
                  main_dir='../centrioles/dataset/new_edition/filtered',
-                 train=True, all_data=False, transform=None, inp_size=512, wsize=(32, 32), 
+                 train=True, all_data=False, transform=None, inp_size=512, wsize=(32, 32),
                  stride=0.5, crop=False, pyramid_layers=1, one=False, bags=True):
         self.samples = []
         self.patient = []
         self.inp_size = inp_size
         self.transform = transform
         self.name = []
-        self.wsize = wsize 
+        self.wsize = wsize
         self.stride = stride
         self.crop = crop
         self.pyramid_layers = pyramid_layers
@@ -395,20 +385,20 @@ class GENdataset(Dataset):
             img_names = [f for f in os.listdir(dir_name) if f.endswith('.png')]
             if all_data:
                 return img_names
-            
+
             delimetr = int(0.9 * len(img_names))
-            
+
             if train:
                 img_names = img_names[:delimetr]
             else:
                 img_names = img_names[delimetr:]
             return img_names
 
-        ## We should take only negative samples
+        # We should take only negative samples
         for num in nums:
             neg_dir = os.path.join(main_dir, str(num) + '_nocentrioles')
 
-            ## Negative sampless
+            # Negative sampless
             for img_name in get_img_names(neg_dir):
                 self.name.append(os.path.join(neg_dir, img_name))
                 img = get_img(self.name[-1])
@@ -422,7 +412,7 @@ class GENdataset(Dataset):
     def __getitem__(self, idx):
         image = self.samples[idx]
         if self.one:
-            proj  = get_random_projection(self.centriolle)
+            proj = get_random_projection(self.centriolle)
             image, label = add_projection(image.copy(), proj, crop=self.crop, stride=self.stride, alpha=0.5, one=True)
             if self.transform:
                 image = self.transform(image)
@@ -432,19 +422,20 @@ class GENdataset(Dataset):
             image = local_autoscale_ms(image)
             return image.float(), label
 
-        if np.random.randint(0,2) == 0:
-            pil_img  = Image.fromarray(image[:,:,0])
-            pil_mask = Image.fromarray(image[:,:,1])
+        if np.random.randint(0, 2) == 0:
+            pil_img = Image.fromarray(image[:, :, 0])
+            pil_mask = Image.fromarray(image[:, :, 1])
             rot_mask = Image.new('L', (self.inp_size, self.inp_size), (1))
-            ret_img  = Image.merge("RGB", [pil_img, pil_mask, rot_mask])
+            ret_img = Image.merge("RGB", [pil_img, pil_mask, rot_mask])
             image, label = ret_img, 0
         else:
-            proj  = get_random_projection(self.centriolle)
+            proj = get_random_projection(self.centriolle)
             image, label = add_projection(image.copy(), proj, crop=self.crop, stride=self.stride, alpha=0.5)
         if self.transform:
             image = self.transform(image)
         if self.bags:
-            image, _ = image2bag(image.float(), size=self.wsize, stride=self.stride, crop=self.crop, pyramid_layers=self.pyramid_layers)
+            image, _ = image2bag(image.float(), size=self.wsize, stride=self.stride,
+                                 crop=self.crop, pyramid_layers=self.pyramid_layers)
         return image, label
 
     def class_balance(self):
@@ -452,13 +443,13 @@ class GENdataset(Dataset):
 
     def class_balance_for_patients(self):
         positives = {}
-        total     = {}
+        total = {}
         for i, num in enumerate(self.patient):
             if num not in positives:
                 positives[num] = 0.0
-                total[num]     = 0.0
+                total[num] = 0.0
             positives[num] += 0.5
-            total[num]     += 1
+            total[num] += 1
         for num in positives:
             positives[num] = positives[num] / total[num]
         return positives
