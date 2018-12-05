@@ -6,13 +6,17 @@ from torch.utils.data import Dataset, DataLoader
 
 from src.utils import image2bag, get_the_central_cell_mask
 from src.utils import get_centriolle, add_projection, get_random_projection, local_autoscale_ms
-from src.utils import show_2d_slice
+from src.utils import show_2d_slice, get_resps_transforms
 
 import sys
 import math
 import os
 from PIL import Image
 import numpy as np
+
+# INTERNAL IMPORTS
+from src.implemented_models import *
+from inferno.trainers.basic import Trainer
 
 
 class CentriollesDatasetOn(Dataset):
@@ -347,7 +351,7 @@ class MnistBags(data_utils.Dataset):
 ###############################################################################
 
 
-class GENdataset(Dataset):
+class GENdatasetILC(Dataset):
     """Centriolles dataset."""
 
     def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021],
@@ -436,6 +440,112 @@ class GENdataset(Dataset):
         if self.bags:
             image, _ = image2bag(image.float(), size=self.wsize, stride=self.stride,
                                  crop=self.crop, pyramid_layers=self.pyramid_layers)
+        return image, label
+
+    def class_balance(self):
+        return 0.5
+
+    def class_balance_for_patients(self):
+        positives = {}
+        total = {}
+        for i, num in enumerate(self.patient):
+            if num not in positives:
+                positives[num] = 0.0
+                total[num] = 0.0
+            positives[num] += 0.5
+            total[num] += 1
+        for num in positives:
+            positives[num] = positives[num] / total[num]
+        return positives
+
+
+class ResponcesDataset(Dataset):
+    """Dataset for last DenseNet in our work.
+       It precomputes responces for each window
+       of the big image with a specified model"""
+
+    def __init__(self, model,
+                 path_to_model_weights='../centrioles/models/ICL_DenseNet_3fc/true_save/weights/',
+                 nums=[397, 402, 403, 406, 396, 3971, 4021],
+                 main_dir='../centrioles/dataset/new_edition/filtered',
+                 train=True, all_data=False, inp_size=512, repeat_rate=10):
+        self.samples = []
+        self.patient = []
+        self.name = []
+        self.inp_size = inp_size
+
+        if train:
+            self.transform, _ = get_resps_transforms()
+        else:
+            _, self.transform = get_resps_transforms()
+        self.classes = []
+        self.images = []
+
+        trainer = Trainer(model)
+        if torch.cuda.is_available():
+            trainer = trainer.load(from_directory=path_to_model_weights,
+                                   best=True)
+        else:
+            trainer = trainer.load(from_directory=path_to_model_weights,
+                                   best=True, map_location='cpu')
+        self.model = trainer.model
+
+        def get_img(img_name):
+            im = Image.open(img_name).convert('L')
+            im.load()
+            im.thumbnail((inp_size, inp_size), Image.ANTIALIAS)
+
+            cp_img = im.copy()
+            im.close()
+
+            mask = Image.fromarray(get_the_central_cell_mask(cp_img, wsize=0))
+            rot_mask = Image.new('L', (inp_size, inp_size), (1))
+            return Image.merge("RGB", [cp_img, mask, rot_mask])
+
+        def get_img_names(dir_name):
+            img_names = [f for f in os.listdir(dir_name) if f.endswith('.png')]
+            if all_data:
+                return img_names
+
+            delimetr = int(0.9 * len(img_names))
+
+            if train:
+                img_names = img_names[:delimetr]
+            else:
+                img_names = img_names[delimetr:]
+            return img_names
+
+        for num in nums:
+            pos_dir = os.path.join(main_dir, str(num) + '_centrioles')
+            neg_dir = os.path.join(main_dir, str(num) + '_nocentrioles')
+
+            # Positive samples
+            for img_name in get_img_names(pos_dir):
+                for i in range(repeat_rate):
+                    self.name.append(os.path.join(pos_dir, img_name))
+                    print(i, self.name[-1])
+                    img = get_img(self.name[-1])
+                    img = self.transform(img)
+                    self.samples.append(img)
+                    self.classes.append(1)
+                    self.patient.append(num)
+
+            # Negative sampless
+            for img_name in get_img_names(neg_dir):
+                for i in range(repeat_rate):
+                    self.name.append(os.path.join(neg_dir, img_name))
+                    img = get_img(self.name[-1])
+                    img = self.transform(img)
+                    self.samples.append(img)
+                    self.classes.append(0)
+                    self.patient.append(num)
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        image = self.samples[idx]
+        label = self.classes[idx]
         return image, label
 
     def class_balance(self):

@@ -9,6 +9,7 @@ import numpy as np
 from scipy import ndimage
 import cv2
 from PIL import Image
+import PIL
 import math
 import random
 import scipy.ndimage.interpolation as inter
@@ -115,7 +116,7 @@ class GetResps(object):
 
 def init_weights(model: torch.nn.Module, ref_model: torch.nn.Module):
     '''
-    Transfer all weights from the second model to the first.
+    Transfer all weights from the second model to the first one.
 
     :param model:
         Torch model, weights of which should be initialized.
@@ -191,7 +192,7 @@ def image2bag(inp: torch.Tensor, size: Tuple[int, int]=(28, 28), stride: float=0
     return torch.stack(bag), boxes
 
 
-def local_autoscale(img: cv2.Mat) -> cv2.Mat:
+def local_autoscale(img: np.array) -> np.array:
     '''
     :return:
         Linearly normilized image to the range 0 - 255
@@ -199,7 +200,7 @@ def local_autoscale(img: cv2.Mat) -> cv2.Mat:
     return np.uint8((img - img.min()) / (img.max() - img.min()) * 255)
 
 
-def local_autoscale_ms(img: cv2.Mat) -> cv2.Mat:
+def local_autoscale_ms(img: np.array) -> np.array:
     '''
     :return:
         Linearly normilized image.
@@ -209,7 +210,7 @@ def local_autoscale_ms(img: cv2.Mat) -> cv2.Mat:
 
 
 def get_the_central_cell_mask(pil_image: PIL.Image, wsize: int=32, gauss_ker_crop: int=21, 
-                              cl_ker: int=0.02, fe_ker: int=0.06, debug: bool=1) -> cv2.Mat:
+                              cl_ker: int=0.02, fe_ker: int=0.06, debug: bool=1) -> np.array:
     '''
     Returns mask for the centrall cell on the EM image.
 
@@ -305,7 +306,7 @@ def get_basic_transforms():
     return train_tr, test_tr
 
 
-def get_resps_transforms(features=False):
+def get_resps_transforms(features=True):
     '''
     :return:
         Transforms for datasets with responce transform in the end.

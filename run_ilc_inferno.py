@@ -75,7 +75,7 @@ if __name__ == "__main__":
     model_dir = os.path.join('models', args.model_name)
     curent_model_dir = os.path.join(model_dir, args.id)
     log_info('Model will be saved to %s' % (curent_model_dir))
-    log_info('  + Number of params: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
+    log_info(' + Number of params: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
 
     weight_dir = os.path.join(curent_model_dir, 'weights')
     log_info('Weights will be saved to %s' % (weight_dir))

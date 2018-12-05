@@ -46,7 +46,7 @@ def num_flat_features(x: torch.Tensor) -> int:
 #  GENERATPORS   #
 ##################
 
-def get_cnn(filters: List[int] = [512]) -> torch.nn.Sequential:
+def get_cnn(filters: List[int]=[512]) -> torch.nn.Sequential:
     '''
     Constructs Convolutional Neural Network with specified number of filters.
     Each block of returned model is:
@@ -375,7 +375,7 @@ class CustomMIL(nn.Module):
     '''
     Implementation of MIL model with attention mechanism.
     '''
-    def __init__(self, feature_extr: torch.nn.Module=None, p2in: int=50*4*4, dropp: int=0.5):
+    def __init__(self, feature_extr: torch.nn.Module=None, p2in: int=50*4*4, dropp: int=0.5, L=500, D=128, K=1):
         '''
         :param feature_extr:
             Feature extraction part. For example convolution layers.
@@ -386,9 +386,9 @@ class CustomMIL(nn.Module):
             Probability in dropuot layers (temprorary disabled).
         '''
         super(CustomMIL, self).__init__()
-        self.L = 500
-        self.D = 128
-        self.K = 1
+        self.L = L
+        self.D = D
+        self.K = K
         self.p2in = p2in
 
         if feature_extr is not None:
