@@ -23,6 +23,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run learning of simple CNN implementation')
 
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
+    parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
     parser.add_argument('--check', action='store_true',
                         help='Specify this flag if you want to check that this code works')
 
@@ -38,9 +39,8 @@ if __name__ == "__main__":
     test_dl = DataLoader(test_ds,  batch_size=4, shuffle=True, num_workers=0)
     log_info('Datasets are initialized!')
 
-    # MODEL
-    model = impl_models.MIL_DenseNet_3fc
-    model_name = 'MIL_DenseNet_3fc'
+    # MODEL MIL_DenseNet_3fc
+    exec("model = impl_models.%s" % (args.model_name))
 
     icl_model = impl_models.ICL_DenseNet_3fc
     path_to_model_weights = '../centrioles/models/ICL_DenseNet_3fc/true_save/weights/'
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     init_weights(model, icl_model, lambda x: 'main_blocks' in x)
 
     # DIRS
-    model_dir = os.path.join('models', model_name)
+    model_dir = os.path.join('models', args.model_name)
     curent_model_dir = os.path.join(model_dir, args.id)
     log_info('Model will be saved to %s' % (curent_model_dir))
     log_info(' + Number of params: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
