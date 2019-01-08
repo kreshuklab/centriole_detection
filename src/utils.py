@@ -114,7 +114,7 @@ class GetResps(object):
         return self.to_torch(resps).float()
 
 
-def init_weights(model: torch.nn.Module, ref_model: torch.nn.Module):
+def init_weights(model: torch.nn.Module, ref_model: torch.nn.Module, filter=None):
     '''
     Transfer all weights from the second model to the first one.
 
@@ -122,13 +122,16 @@ def init_weights(model: torch.nn.Module, ref_model: torch.nn.Module):
         Torch model, weights of which should be initialized.
     :param ref_model:
         Reference model, weight of which should be transfered to the model.
+    :param filter: None
+        Function which gets layer name and return if we should transfer wieghts or not.
     '''
     ref_params = ref_model.state_dict()
     mod_params = model.state_dict()
 
     for name1 in ref_params:
         if name1 in mod_params:
-            mod_params[name1].data.copy_(ref_params[name1])
+            if filter is None or filter(name1):
+                mod_params[name1].data.copy_(ref_params[name1])
 
     model.load_state_dict(mod_params)
 

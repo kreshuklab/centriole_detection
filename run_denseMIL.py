@@ -52,7 +52,7 @@ if __name__ == "__main__":
     if args.test:
         train_ds = MnistBags(wsize=(args.wsize, args.wsize))
         test_ds = MnistBags(wsize=(args.wsize, args.wsize), train=False)
-        log_info('Minst dataset is used')
+        log_info('Mnist dataset is used')
     elif args.arti:
         train_ds = GENdataset(transform=train_tr,
                               inp_size=args.img_size, wsize=(args.wsize, args.wsize),

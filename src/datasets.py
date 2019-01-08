@@ -89,7 +89,7 @@ class CentriollesDatasetPatients(Dataset):
     """Centriolles dataset."""
 
     def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/filtered',
-                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=2048):
+                 all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=2048, check=False):
         self.samples = []
         self.classes = []
         self.patient = []
@@ -123,6 +123,8 @@ class CentriollesDatasetPatients(Dataset):
                 self.classes.append(1)
                 self.patient.append(num)
                 im.close()
+                if check:
+                    break
 
             # Negative samples
             for img_name in get_img_names(neg_dir):
@@ -133,6 +135,10 @@ class CentriollesDatasetPatients(Dataset):
                 self.classes.append(0)
                 self.patient.append(num)
                 im.close()
+                if check:
+                    break
+            if check:
+                break
 
     def __len__(self):
         return len(self.samples)
@@ -466,7 +472,7 @@ class ResponcesDataset(Dataset):
 
     def __init__(self, model,
                  path_to_model_weights='../centrioles/models/ICL_DenseNet_3fc/true_save/weights/',
-                 nums=[397, 402, 403, 406, 396, 3971, 4021],
+                 nums=[397, 402, 403, 406, 396, 3971, 4021], check=False,
                  main_dir='../centrioles/dataset/new_edition/filtered',
                  train=True, all_data=False, inp_size=512, repeat_rate=10):
         self.samples = []
