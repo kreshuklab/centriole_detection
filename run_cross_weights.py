@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     # MODEL
     model = impl_models.MIL_DenseNet_3fc
-    model_name = 'impl_model.MIL_DenseNet_3fc'
+    model_name = 'MIL_DenseNet_3fc'
 
     icl_model = impl_models.ICL_DenseNet_3fc
     path_to_model_weights = '../centrioles/models/ICL_DenseNet_3fc/true_save/weights/'
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     weight_dir = os.path.join(curent_model_dir, 'weights')
     log_info('Weights will be saved to %s' % (weight_dir))
     if not os.path.exists(weight_dir):
-        os.mkdir(weight_dir)
+        os.makedirs(weight_dir)
     logs_dir = os.path.join(curent_model_dir, 'logs')
     if not os.path.exists(logs_dir):
         os.mkdir(logs_dir)
