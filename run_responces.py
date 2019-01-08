@@ -64,8 +64,8 @@ if __name__ == "__main__":
         .build_criterion('CrossEntropyLoss') \
         .build_metric('CategoricalError') \
         .build_optimizer('Adam') \
-        .validate_every((2, 'epochs')) \
-        .save_every((5, 'epochs')) \
+        .validate_every((400, 'iterations')) \
+        .save_every((400, 'iterations')) \
         .save_to_directory(weight_dir) \
         .set_max_num_epochs(10000) \
         .build_logger(logger, log_directory=logs_dir) \
