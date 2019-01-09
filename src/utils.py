@@ -114,7 +114,7 @@ class GetResps(object):
         return self.to_torch(resps).float()
 
 
-def init_weights(model: torch.nn.Module, ref_model: torch.nn.Module, filter=None):
+def init_weights(model: torch.nn.Module, ref_model: torch.nn.Module, freeze_gradients=False, filter=None):
     '''
     Transfer all weights from the second model to the first one.
 
@@ -132,6 +132,8 @@ def init_weights(model: torch.nn.Module, ref_model: torch.nn.Module, filter=None
         if name1 in mod_params:
             if filter is None or filter(name1):
                 mod_params[name1].data.copy_(ref_params[name1])
+                if freeze_gradients:
+                    mod_params[name1].requires_grad = False
 
     model.load_state_dict(mod_params)
 

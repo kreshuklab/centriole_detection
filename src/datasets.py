@@ -88,7 +88,8 @@ class CentriollesDatasetOn(Dataset):
 class CentriollesDatasetPatients(Dataset):
     """Centriolles dataset."""
 
-    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021], main_dir='dataset/new_edition/filtered',
+    def __init__(self, nums=[397, 402, 403, 406, 396, 3971, 4021],
+                 main_dir='../centrioles/dataset/new_edition/filtered',
                  all_data=False, train=True, fold=0, out_of=1, transform=None, inp_size=2048, check=False):
         self.samples = []
         self.classes = []

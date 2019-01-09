@@ -54,7 +54,7 @@ if __name__ == "__main__":
     icl_model = trainer.model
     icl_model.features_needed = True
 
-    init_weights(model, icl_model, lambda x: 'main_blocks' in x)
+    init_weights(model, icl_model, freeze_gradients=True, filter=lambda x: 'main_blocks' in x)
 
     # DIRS
     model_dir = os.path.join('models', args.model_name)
