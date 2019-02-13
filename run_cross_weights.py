@@ -45,7 +45,7 @@ if __name__ == "__main__":
     exec("model = impl_models.%s" % (args.model_name))
 
     icl_model = impl_models.ICL_DenseNet_3fc
-    path_to_model_weights = '../centrioles/models/ICL_DenseNet_3fc/true_save/weights/'
+    path_to_model_weights = '../centrioles/run_history/ICL_DenseNet_3fc/true_save/weights/'
     trainer = Trainer(model)
     if torch.cuda.is_available():
         trainer = trainer.load(from_directory=path_to_model_weights,
