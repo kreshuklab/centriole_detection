@@ -27,12 +27,12 @@ ICL_DenseNet_3fc = DenseNet(32, [6, 12, 32], [1280, 80, 16])
 
 MIL_DenseNet_3fc = DenseNet(32, [6, 12, 32, 12, 6, 3], [448, 80, 16])
 MIL_DenseNet_3fc_bn = DenseNet(32, [6, 12, 32, 1, 6, 12], [648, 80, 16])
-MIL_DenseNet_3fc_narrow = DenseNet(32, [6, 12, 32, 2, 2, 2], [216, 80, 16])
+MIL_DenseNet_3fc_narrow = DenseNet(32, [6, 12, 32, 2, 2, 2], [272, 80, 16])
 MIL_DenseNet_3fc_super_narrow = DenseNet(32, [6, 12, 32, 1, 1, 1], [216, 80, 16])
 
 MIL_DenseNet_2fc = DenseNet(32, [6, 12, 32, 12, 6, 3], [448, 4])
-MIL_DenseNet_2fc_bn = DenseNet(32, [6, 12, 32, 1, 6, 12], [648, 80, 16])
-MIL_DenseNet_2fc_narrow = DenseNet(32, [6, 12, 32, 2, 2, 2], [216, 4])
+MIL_DenseNet_2fc_bn = DenseNet(32, [6, 12, 32, 1, 6, 12], [648, 4])
+MIL_DenseNet_2fc_narrow = DenseNet(32, [6, 12, 32, 2, 2, 2], [272, 4])
 MIL_DenseNet_2fc_super_narrow = DenseNet(32, [6, 12, 32, 1, 1, 1], [216, 4])
 #                         #
 
