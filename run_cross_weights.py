@@ -24,6 +24,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
     parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
+    parser.add_argument('--freeze', action='store_true',
+                        help='Freezes first part')
     parser.add_argument('--check', action='store_true',
                         help='Specify this flag if you want to check that this code works')
 
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     icl_model = trainer.model
     icl_model.features_needed = True
 
-    init_weights(model, icl_model, freeze_gradients=True, filter=lambda x: 'main_blocks' in x)
+    init_weights(model, icl_model, freeze_gradients=args.freeze, filter=lambda x: 'main_blocks' in x)
 
     # DIRS
     model_dir = os.path.join('models', args.model_name)

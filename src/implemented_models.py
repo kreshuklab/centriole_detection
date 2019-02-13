@@ -24,7 +24,16 @@ DenseNet_BN_32k_to7x7_mp_5fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 51
 
 # MAIN NETS FOR DNO MODEL #
 ICL_DenseNet_3fc = DenseNet(32, [6, 12, 32], [1280, 80, 16])
+
 MIL_DenseNet_3fc = DenseNet(32, [6, 12, 32, 12, 6, 3], [448, 80, 16])
+MIL_DenseNet_3fc_bn = DenseNet(32, [6, 12, 32, 1, 6, 12], [648, 80, 16])
+MIL_DenseNet_3fc_narrow = DenseNet(32, [6, 12, 32, 2, 2, 2], [216, 80, 16])
+MIL_DenseNet_3fc_super_narrow = DenseNet(32, [6, 12, 32, 1, 1, 1], [216, 80, 16])
+
+MIL_DenseNet_2fc = DenseNet(32, [6, 12, 32, 12, 6, 3], [448, 4])
+MIL_DenseNet_2fc_bn = DenseNet(32, [6, 12, 32, 1, 6, 12], [648, 80, 16])
+MIL_DenseNet_2fc_narrow = DenseNet(32, [6, 12, 32, 2, 2, 2], [216, 4])
+MIL_DenseNet_2fc_super_narrow = DenseNet(32, [6, 12, 32, 1, 1, 1], [216, 4])
 #                         #
 
 ICL_MIL_DS3fc = DenseMIL(32, [6, 12, 32], p2in=1280)
