@@ -282,7 +282,7 @@ class DenseNet(nn.Module):
     '''
     def __init__(self, growthRate: int, nLayers: List[int], nFc: List[int], reduction: float=0.5,
                  nClasses: int=2, crosscon: bool=False, bottleneck: bool=True, max_pool: bool=False,
-                 inp_channels: int=1, features_needed: bool=False):
+                 inp_channels: int=1, features_needed: bool=False, drop_out_prob=None):
 
         '''
         :param growthRate:
@@ -310,6 +310,8 @@ class DenseNet(nn.Module):
             Replace all average poolings with max pool (temprory disabled)
         :param features_needed:
             Drop features after last convolutional layer in the forward method?
+        :param drop_out_prob:
+            None (default if not needed), float - probability
         '''
         super(DenseNet, self).__init__()
         self.max_pool = max_pool
@@ -337,6 +339,9 @@ class DenseNet(nn.Module):
         for i in range(len(nFc) - 1):
             fc_part.append(nn.Linear(nFc[i], nFc[i+1]))
             fc_part.append(nn.ReLU())
+            if drop_out_prob is not None and drop_out_prob >= 0 and drop_out_prob <= 1:
+                fc_part.append(nn.Dropout(p=drop_out_prob))
+
         self.fc_part = nn.Sequential(*fc_part)
 
         self.clf = nn.Linear(nFc[-1], nClasses)
