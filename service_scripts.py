@@ -1,6 +1,6 @@
 import mrcfile
 import cv2
-import tqdm
+from tqdm import tqdm
 import numpy as np
 import os
 
