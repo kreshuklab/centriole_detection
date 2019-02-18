@@ -10,7 +10,7 @@ from inferno.trainers.basic import Trainer
 from tqdm import tqdm
 
 model = impl_models.MIL_DenseNet_3fc_bn
-path_to_model_weights = '../centrioles/models/MIL_DenseNet_3fc_bn/rerun/weights'
+path_to_model_weights = '../centrioles/models/MIL_DenseNet_3fc_bn/3fc_bn_rerun/weights'
 trainer = Trainer(model)
 if torch.cuda.is_available():
     trainer = trainer.load(from_directory=path_to_model_weights,
