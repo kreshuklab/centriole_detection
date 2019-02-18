@@ -1,6 +1,7 @@
 import numpy as np
 import src.implemented_models as impl_models
 import torch.nn.functional as F
+import torch
 from src.datasets import CentriollesDatasetPatients
 from src.utils import log_info, get_basic_transforms
 from src.utils import init_weights
@@ -45,6 +46,9 @@ for ind, (img, label) in tqdm(enumerate(dataset)):
 
 accuracy = true_resp / len(dataset)
 print(accuracy)
+
+with open('result.txt', 'w') as output:
+    print(accuracy, file=output)
 
 with open('false_positives.txt', 'w') as output:
     for label in false_positives:
