@@ -95,6 +95,7 @@ class CentriollesDatasetPatients(Dataset):
         self.classes = []
         self.patient = []
         self.transform = transform
+        self.path = []
 
         def get_img_names(dir_name):
             img_names = [f for f in os.listdir(dir_name) if f.endswith('.png')]
@@ -123,6 +124,7 @@ class CentriollesDatasetPatients(Dataset):
                 self.samples.append(im.copy())
                 self.classes.append(1)
                 self.patient.append(num)
+                self.path.append(os.path.join(pos_dir, img_name))
                 im.close()
                 if check:
                     break
@@ -135,6 +137,7 @@ class CentriollesDatasetPatients(Dataset):
                 self.samples.append(im.copy())
                 self.classes.append(0)
                 self.patient.append(num)
+                self.path.append(os.path.join(neg_dir, img_name))
                 im.close()
                 if check:
                     break
