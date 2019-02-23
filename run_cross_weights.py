@@ -19,6 +19,12 @@ from torch.utils.data import DataLoader
 from inferno.trainers.callbacks.logging.tensorboard import TensorboardLogger
 from inferno.trainers.callbacks.scheduling import AutoLR
 
+
+def log_hist(self, tag, values=1, step=1, bins=1000):
+    """Logs the histogram of a list/vector of values."""
+    pass
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run learning of simple CNN implementation')
 
