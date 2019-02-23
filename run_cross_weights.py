@@ -24,8 +24,14 @@ if __name__ == "__main__":
 
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
     parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
-    parser.add_argument('--freeze', action='store_true',
-                        help='Freezes first part')
+
+    parser.add_argument('--continue_training', action='store_true',
+                        help='It is also nessesary to specify init_weights_path')
+    parser.add_argument('--init_model_path', type=str,
+                        default='../centrioles/run_history/ICL_DenseNet_3fc/true_save/weights/',
+                        help='Name of the model for initialization')
+
+    parser.add_argument('--freeze', action='store_true', help='Freezes first part')
     parser.add_argument('--check', action='store_true',
                         help='Specify this flag if you want to check that this code works')
 
@@ -44,20 +50,29 @@ if __name__ == "__main__":
     # MODEL MIL_DenseNet_3fc
     exec("model = impl_models.%s" % (args.model_name))
 
-    icl_model = impl_models.ICL_DenseNet_3fc
-    path_to_model_weights = '../centrioles/run_history/ICL_DenseNet_3fc/true_save/weights/'
-    trainer = Trainer(model)
-    if torch.cuda.is_available():
-        trainer = trainer.load(from_directory=path_to_model_weights,
-                               best=True)
-    else:
-        trainer = trainer.load(from_directory=path_to_model_weights,
-                               best=True, map_location='cpu')
-    icl_model = trainer.model
-    icl_model.features_needed = True
+    if args.continue_training:
+        trainer = Trainer(model)
+        if torch.cuda.is_available():
+            trainer = trainer.load(from_directory=args.init_model_path, best=True)
+        else:
+            trainer = trainer.load(from_directory=args.init_model_path, best=True, map_location='cpu')
+        init_model = trainer.model
+        init_model.features_needed = True
 
-    init_weights(model, icl_model, freeze_gradients=args.freeze,
-                 filter=lambda x: 'main_blocks' in x or 'conv1' in x)
+        init_weights(model, init_model, freeze_gradients=args.freeze)
+    else:
+        icl_model = impl_models.ICL_DenseNet_3fc
+        path_to_model_weights = '../centrioles/run_history/ICL_DenseNet_3fc/true_save/weights/'
+        trainer = Trainer(icl_model)
+        if torch.cuda.is_available():
+            trainer = trainer.load(from_directory=path_to_model_weights, best=True)
+        else:
+            trainer = trainer.load(from_directory=path_to_model_weights, best=True, map_location='cpu')
+        icl_model = trainer.model
+        icl_model.features_needed = True
+
+        init_weights(model, icl_model, freeze_gradients=args.freeze,
+                     filter=lambda x: 'main_blocks' in x or 'conv1' in x)
 
     # DIRS
     model_dir = os.path.join('models', args.model_name)
