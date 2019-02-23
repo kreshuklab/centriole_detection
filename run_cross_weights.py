@@ -40,8 +40,14 @@ if __name__ == "__main__":
 
     # Dataset
     train_tr, test_tr = get_basic_transforms()
-    train_ds = CentriollesDatasetPatients(transform=train_tr, inp_size=512, train=True, check=args.check)
-    test_ds = CentriollesDatasetPatients(transform=test_tr, inp_size=512, train=False, check=args.check)
+    train_ds = CentriollesDatasetPatients(nums=[397, 402, 403, 406, 396, 3971, 4021, 3960, 406183],
+                                          main_dir='../centrioles/dataset/new_edition/combined',
+                                          all_data=True,
+                                          transform=train_tr, inp_size=512, train=True, check=args.check)
+    test_ds = CentriollesDatasetPatients(nums=[3970, 4010, 4090, 40311, 40318, 40918, 406180],
+                                         main_dir='../centrioles/dataset/new_edition/combined',
+                                         all_data=True,
+                                         transform=test_tr, inp_size=512, train=False, check=args.check)
 
     train_dl = DataLoader(train_ds, batch_size=4, shuffle=True, num_workers=0)
     test_dl = DataLoader(test_ds,  batch_size=4, shuffle=True, num_workers=0)
