@@ -282,7 +282,7 @@ class DenseNet(nn.Module):
     '''
     def __init__(self, growthRate: int, nLayers: List[int], nFc: List[int], reduction: float=0.5,
                  nClasses: int=2, crosscon: bool=False, bottleneck: bool=True, max_pool: bool=False,
-                 inp_channels: int=1, features_needed: bool=False, drop_out_prob=None):
+                 inp_channels: int=1, features_needed: bool=False, drop_out_prob=None, avg_pool_size: int=3):
 
         '''
         :param growthRate:
@@ -315,6 +315,7 @@ class DenseNet(nn.Module):
         '''
         super(DenseNet, self).__init__()
         self.max_pool = max_pool
+        self.avg_pool_size = avg_pool_size
         self.features_needed = features_needed
 
         # First convolution layer
@@ -354,7 +355,7 @@ class DenseNet(nn.Module):
         # it is a global pooling, so the resolution of the image after all previous blocks should be 7x7
         # is it ok for our part to have an avg pooling in the end?
         # or 7 if it is previous models
-        features = F.avg_pool2d(out, 3)
+        features = F.avg_pool2d(out, self.avg_pool_size)
 
         # for skip connections:
         # mem_data = F.upsample(mem_data, size=(x.size(2), x.size(3)), mode='bilinear')
