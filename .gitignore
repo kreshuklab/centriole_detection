@@ -1,0 +1,8 @@
+.ipynb_checkpoints/
+.vscode/
+Untitled.ipynb
+__pycache__/
+dataset/
+debug/
+models/
+src/__pycache__/
