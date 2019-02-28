@@ -30,6 +30,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
     parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
+    parser.add_argument('--fold', type=int, default=0, help='Number of fold for train/test split')
 
     parser.add_argument('--continue_training', action='store_true',
                         help='It is also nessesary to specify init_weights_path')
@@ -44,13 +45,25 @@ if __name__ == "__main__":
     args = parser.parse_args()
     log_info('Params: ' + str(args))
 
+    train_folds = [[397, 402, 403, 406, 396, 3971, 4021, 3960, 406183],
+                   [4010, 402, 403, 406, 4090, 4021, 40311, 40318, 40918, 406180, 406183],
+                   [4010, 402, 403, 3971, 3960, 40311, 40318, 40918, 406180, 406183],
+                   [3970, 397, 396, 3971, 3960, 40311, 40318, 40918, 406180, 406183],
+                   [3970, 397, 396, 3971, 3960, 40311, 4010, 402, 403]]
+
+    test_folds = [[3970, 4010, 4090, 40311, 40318, 40918, 406180],
+                  [3970, 397, 396, 3971, 3960],
+                  [3970, 397, 396, 406, 4090, 4021],
+                  [4010, 402, 403, 406, 4090, 4021],
+                  [40318, 40918, 406180, 406183, 4021]]
+
     # Dataset
     train_tr, test_tr = get_basic_transforms()
-    train_ds = CentriollesDatasetPatients(nums=[397, 402, 403, 406, 396, 3971, 4021, 3960, 406183],
+    train_ds = CentriollesDatasetPatients(nums=train_folds[args.fold],
                                           main_dir='../centrioles/dataset/new_edition/combined',
                                           all_data=True,
                                           transform=train_tr, inp_size=512, train=True, check=args.check)
-    test_ds = CentriollesDatasetPatients(nums=[3970, 4010, 4090, 40311, 40318, 40918, 406180],
+    test_ds = CentriollesDatasetPatients(nums=test_folds[args.fold],
                                          main_dir='../centrioles/dataset/new_edition/combined',
                                          all_data=True,
                                          transform=test_tr, inp_size=512, train=False, check=args.check)
