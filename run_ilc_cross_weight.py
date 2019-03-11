@@ -5,6 +5,7 @@ import argparse
 import os
 import subprocess
 import sys
+import numpy as np
 
 # INTERNAL IMPORTS
 from src.datasets import GENdatasetILC
@@ -92,7 +93,7 @@ if __name__ == "__main__":
         .build_logger(logger, log_directory=logs_dir) \
         .register_callback(AutoLR(0.96, (1, 'epochs'), monitor_momentum=0.9,
                            monitor_while='validating',
-                           consider_improvement_with_respect_to='bes'))
+                           consider_improvement_with_respect_to='best'))
 
     # Bind loaders
     trainer \

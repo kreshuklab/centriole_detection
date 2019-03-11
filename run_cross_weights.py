@@ -55,11 +55,11 @@ if __name__ == "__main__":
 
     # Dataset
     train_tr, test_tr = get_basic_transforms()
-    train_ds = CentriollesDatasetPatients(nums=[397],
+    train_ds = CentriollesDatasetPatients(nums=train_folds[args.fold],
                                           main_dir='../centrioles/dataset/new_edition/combined',
                                           all_data=True,
                                           transform=train_tr, inp_size=512, train=True, check=args.check)
-    test_ds = CentriollesDatasetPatients(nums=[397],
+    test_ds = CentriollesDatasetPatients(nums=test_folds[args.fold],
                                          main_dir='../centrioles/dataset/new_edition/combined',
                                          all_data=True,
                                          transform=test_tr, inp_size=512, train=False, check=args.check)
