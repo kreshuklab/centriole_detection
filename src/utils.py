@@ -475,16 +475,19 @@ def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=
     g5per = np.percentile(img, 2)
 
     boxes = []
+    neg_boxes = []
     wsize = proj.shape
 
     add_one = False
     for cx in range(0, w - wsize[0], int(wsize[0] * stride)):
         for cy in range(0, h - wsize[1], int(wsize[1] * stride)):
             if crop and mask[cx:cx+wsize[0], cy:cy+wsize[1]].sum() != wsize[0] * wsize[1]:
+                neg_boxes.append((cx, cy, wsize[0], wsize[1]))
                 continue
 #             if  img[cx:cx+wsize[0], cy:cy+wsize[1]].mean() < cent_color
 #                 continue
             boxes.append((cx, cy, wsize[0], wsize[1]))
+            neg_boxes.append((cx, cy, wsize[0], wsize[1]))
 
     if len(boxes) == 0:
         if one:
@@ -496,8 +499,8 @@ def add_projection(inp, proj, crop=True, stride=0.1, smooth=3, std_th=30, alpha=
         return img, 0
 
     if one and np.random.randint(0, 2) == 0:
-        weights = [1 for cx, cy, wx, wy in boxes]
-        cx, cy, wx, wy = boxes[weighted_rand(weights)]
+        weights = [1 for cx, cy, wx, wy in neg_boxes]
+        cx, cy, wx, wy = neg_boxes[weighted_rand(weights)]
 
         mx, my = int(cx + wx/2), int(cy + wy/2)
         lx, ly = max(0, mx - wx), max(0, my - wy)
