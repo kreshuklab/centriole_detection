@@ -433,7 +433,7 @@ class GENdatasetILC(Dataset):
             mx, my = int(image.size()[1]/2), int(image.size()[2]/2)
             rx, ry = int(proj.shape[0] / 2), int(proj.shape[1] / 2)
             image = image[:, mx - rx:mx + rx, my - ry:my + ry]
-            # image = local_autoscale_ms(image)
+            image = local_autoscale_ms(image)
             return image, label
 
         if np.random.randint(0, 2) == 0:
