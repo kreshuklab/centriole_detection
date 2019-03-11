@@ -123,7 +123,7 @@ if __name__ == "__main__":
         .build_criterion('CrossEntropyLoss') \
         .build_metric('CategoricalError') \
         .build_optimizer('Adam') \
-        .evaluate_metric_every((100, 'iterations')) \
+        .evaluate_metric_every((10, 'iterations')) \
         .validate_every((1, 'epochs')) \
         .save_every((1, 'epochs')) \
         .save_to_directory(weight_dir) \
