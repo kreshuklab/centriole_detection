@@ -5,6 +5,7 @@ import argparse
 import os
 import subprocess
 import sys
+import numpy as np
 
 # INTERNAL IMPORTS
 from src.datasets import CentriollesDatasetPatients
@@ -18,11 +19,6 @@ from inferno.trainers.basic import Trainer
 from torch.utils.data import DataLoader
 from inferno.trainers.callbacks.logging.tensorboard import TensorboardLogger
 from inferno.trainers.callbacks.scheduling import AutoLR
-
-
-def log_hist(self, tag, values=1, step=1, bins=1000):
-    """Logs the histogram of a list/vector of values."""
-    pass
 
 
 if __name__ == "__main__":
@@ -59,11 +55,11 @@ if __name__ == "__main__":
 
     # Dataset
     train_tr, test_tr = get_basic_transforms()
-    train_ds = CentriollesDatasetPatients(nums=train_folds[args.fold],
+    train_ds = CentriollesDatasetPatients(nums=[397],
                                           main_dir='../centrioles/dataset/new_edition/combined',
                                           all_data=True,
                                           transform=train_tr, inp_size=512, train=True, check=args.check)
-    test_ds = CentriollesDatasetPatients(nums=test_folds[args.fold],
+    test_ds = CentriollesDatasetPatients(nums=[397],
                                          main_dir='../centrioles/dataset/new_edition/combined',
                                          all_data=True,
                                          transform=test_tr, inp_size=512, train=False, check=args.check)
@@ -115,7 +111,12 @@ if __name__ == "__main__":
     log_info('Logs will be saved to %s' % (logs_dir))
 
     # Build trainer
-    logger = TensorboardLogger(log_scalars_every=(1, 'iteration'))
+    logger = TensorboardLogger(log_scalars_every=(1, 'iteration'),
+                               log_images_every=(np.inf, 'epochs'))
+
+    def log_histogram(self, tag, values, bins=1000):
+        pass
+    logger.log_histogram = log_histogram
 
     trainer = Trainer(model)\
         .build_criterion('CrossEntropyLoss') \

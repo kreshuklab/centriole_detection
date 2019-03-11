@@ -88,8 +88,11 @@ if __name__ == "__main__":
 
     # Build trainer
     logger = TensorboardLogger(log_scalars_every=(1, 'iteration'),
-                               log_images_every=None,
-                               log_histograms_every=None)
+                               log_images_every=(np.inf, 'epochs'))
+
+    def log_histogram(self, tag, values, bins=1000):
+        pass
+    logger.log_histogram = log_histogram
 
     trainer = Trainer(model)\
         .build_criterion('CrossEntropyLoss') \
@@ -102,7 +105,7 @@ if __name__ == "__main__":
         .build_logger(logger, log_directory=logs_dir) \
         .register_callback(AutoLR(0.96, (1, 'epochs'), monitor_momentum=0.9,
                            monitor_while='validating',
-                           consider_improvement_with_respect_to='best'))
+                           consider_improvement_with_respect_to='bes'))
 
     # Bind loaders
     trainer \

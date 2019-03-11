@@ -74,7 +74,12 @@ if __name__ == "__main__":
     log_info('Logs will be saved to %s' % (logs_dir))
 
     # Build trainer
-    logger = TensorboardLogger(log_scalars_every=(1, 'iteration'))
+    logger = TensorboardLogger(log_scalars_every=(1, 'iteration'),
+                               log_images_every=(np.inf, 'epochs'))
+
+    def log_histogram(self, tag, values, bins=1000):
+        pass
+    logger.log_histogram = log_histogram
 
     trainer = Trainer(model)\
         .build_criterion('CrossEntropyLoss') \
