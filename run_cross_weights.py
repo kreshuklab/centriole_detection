@@ -119,11 +119,6 @@ if __name__ == "__main__":
                                log_images_every=None,
                                log_histograms_every=None)
 
-    def log_hist(self, tag, values=1, step=1, bins=1000):
-        """Logs the histogram of a list/vector of values."""
-        pass
-    logger.log_histogram = log_hist
-
     trainer = Trainer(model)\
         .build_criterion('CrossEntropyLoss') \
         .build_metric('CategoricalError') \
