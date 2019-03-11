@@ -4,5 +4,6 @@ Untitled.ipynb
 __pycache__/
 dataset/
 debug/
+run_history/
 models/
 src/__pycache__/
