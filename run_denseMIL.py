@@ -114,8 +114,9 @@ if __name__ == "__main__":
         .save_to_directory(model_dir) \
         .set_max_num_epochs(10000) \
         .register_callback(GradChecker()) \
-        .register_callback(AutoLR(0.9, (1, 'epochs'),
-                           consider_improvement_with_respect_to='previous'))\
+        .register_callback(AutoLR(0.96, (1, 'epochs'), monitor_momentum=0.9,
+                           monitor_while='validating',
+                           consider_improvement_with_respect_to='best'))\
         .build_logger(TensorboardLogger(log_scalars_every=(1, 'iteration'),
                                         log_images_every=(1, 'epoch')),
                       log_directory=logs_dir)
