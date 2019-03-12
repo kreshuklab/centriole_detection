@@ -83,7 +83,7 @@ if __name__ == "__main__":
         init_weights(model, init_model, freeze_gradients=args.freeze)
     else:
         icl_model = impl_models.ICL_DenseNet_3fc
-        path_to_model_weights = '../centrioles/run_history/ICL_DenseNet_3fc/true_save/weights/'
+        path_to_model_weights = '../centrioles/icl_weights/ICL_DenseNet_3fc/fold_{}/weights/'.format(args.fold)
         trainer = Trainer(icl_model)
         if torch.cuda.is_available():
             trainer = trainer.load(from_directory=path_to_model_weights, best=True)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
         .save_to_directory(weight_dir) \
         .set_max_num_epochs(10000) \
         .build_logger(logger, log_directory=logs_dir) \
-        .register_callback(AutoLR(0.96, (1, 'epochs'), monitor_momentum=0.9,
+        .register_callback(AutoLR(0.98, (10, 'epochs'), monitor_momentum=0.9,
                            monitor_while='validating',
                            consider_improvement_with_respect_to='best'))
 
