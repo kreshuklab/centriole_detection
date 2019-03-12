@@ -21,6 +21,10 @@ from inferno.trainers.callbacks.logging.tensorboard import TensorboardLogger
 from inferno.trainers.callbacks.scheduling import AutoLR
 
 
+def log_histogram(self, tag, values, bins=1000):
+        pass
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run learning of simple CNN implementation')
 
