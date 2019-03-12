@@ -7,7 +7,7 @@ EMAIL      = 'artem.lukoianov@embl.de'
 MEMORY     = 80
 TIME_LIMIT = 100
 ID         = 'default'
-MAIL_TYPE  = 'FAIL'
+MAIL_TYPE  = 'NONE'
 
 RUNNING_COMAND = './run_cross_weights.py'
 ADDITIONAL_MODULES = 'module load cuDNN'
