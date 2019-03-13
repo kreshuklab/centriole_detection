@@ -61,11 +61,12 @@ if __name__ == "__main__":
     train_tr, test_tr = get_basic_transforms()
     train_ds = CentriollesDatasetPatients(nums=train_folds[args.fold],
                                           main_dir='../centrioles/dataset/new_edition/combined',
-                                          all_data=True,
+                                        #  all_data=True,
                                           transform=train_tr, inp_size=512, train=True, check=args.check)
-    test_ds = CentriollesDatasetPatients(nums=test_folds[args.fold],
+    test_ds = CentriollesDatasetPatients(nums=train_folds[args.fold],
+                                        # nums=test_folds[args.fold],
                                          main_dir='../centrioles/dataset/new_edition/combined',
-                                         all_data=True,
+                                        # all_data=True,
                                          transform=test_tr, inp_size=512, train=False, check=args.check)
 
     train_dl = DataLoader(train_ds, batch_size=4, shuffle=True, num_workers=0)
@@ -132,9 +133,12 @@ if __name__ == "__main__":
         .save_to_directory(weight_dir) \
         .set_max_num_epochs(10000) \
         .build_logger(logger, log_directory=logs_dir) \
-        .register_callback(AutoLR(0.98, (10, 'epochs'), monitor_momentum=0.9,
-                           monitor_while='validating',
-                           consider_improvement_with_respect_to='best'))
+        .register_callback(AutoLR(0.9, (1, 'epochs'),
+                           consider_improvement_with_respect_to='previous'))
+
+        # .register_callback(AutoLR(0.98, (10, 'epochs'), monitor_momentum=0.9,
+        #                    monitor_while='validating',
+        #                    consider_improvement_with_respect_to='best'))
 
     # Bind loaders
     trainer \
