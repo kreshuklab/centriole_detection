@@ -88,7 +88,9 @@ if __name__ == "__main__":
         init_weights(model, init_model, freeze_gradients=args.freeze)
     else:
         icl_model = impl_models.ICL_DenseNet_3fc
-        path_to_model_weights = '../centrioles/icl_weights/ICL_DenseNet_3fc/fold_{}/weights/'.format(args.fold)
+        # path_to_model_weights = '../centrioles/icl_weights/ICL_DenseNet_3fc/fold_{}/weights/'.format(args.fold)
+        path_to_model_weights = '../centrioles/run_history/ICL_DenseNet_3fc/true_save/weights/'
+        
         trainer = Trainer(icl_model)
         if torch.cuda.is_available():
             trainer = trainer.load(from_directory=path_to_model_weights, best=True)
