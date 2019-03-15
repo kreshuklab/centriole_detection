@@ -135,12 +135,12 @@ if __name__ == "__main__":
         .save_to_directory(weight_dir) \
         .set_max_num_epochs(10000) \
         .build_logger(logger, log_directory=logs_dir) \
-        .register_callback(AutoLR(0.9, (1, 'epochs'),
-                           consider_improvement_with_respect_to='previous'))
+        .register_callback(AutoLR(0.99, (20, 'epochs'), monitor_momentum=0.9,
+                           monitor_while='validating',
+                           consider_improvement_with_respect_to='best'))
+        # .register_callback(AutoLR(0.9, (1, 'epochs'),
+        #                    consider_improvement_with_respect_to='previous'))
 
-        # .register_callback(AutoLR(0.98, (10, 'epochs'), monitor_momentum=0.9,
-        #                    monitor_while='validating',
-        #                    consider_improvement_with_respect_to='best'))
 
     # Bind loaders
     trainer \
