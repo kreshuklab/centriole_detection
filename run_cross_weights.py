@@ -31,6 +31,7 @@ if __name__ == "__main__":
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
     parser.add_argument('--model_name', type=str, default='', help='Name of the model from models dir')
     parser.add_argument('--fold', type=int, default=0, help='Number of fold for train/test split')
+    parser.add_argument('--regularization', type=float, default=0.0, help='l2 weight decay for adams')
 
     parser.add_argument('--continue_training', action='store_true',
                         help='It is also nessesary to specify init_weights_path')
@@ -128,14 +129,14 @@ if __name__ == "__main__":
     trainer = Trainer(model)\
         .build_criterion('CrossEntropyLoss') \
         .build_metric('CategoricalError') \
-        .build_optimizer('Adam') \
+        .build_optimizer('Adam', weight_decay=args.regularization) \
         .evaluate_metric_every((10, 'iterations')) \
         .validate_every((1, 'epochs')) \
         .save_every((1, 'epochs')) \
         .save_to_directory(weight_dir) \
         .set_max_num_epochs(10000) \
         .build_logger(logger, log_directory=logs_dir) \
-        .register_callback(AutoLR(0.99, (20, 'epochs'), monitor_momentum=0.9,
+        .register_callback(AutoLR(0.99, (30, 'epochs'), monitor_momentum=0.9,
                            monitor_while='validating',
                            consider_improvement_with_respect_to='best'))
         # .register_callback(AutoLR(0.9, (1, 'epochs'),
