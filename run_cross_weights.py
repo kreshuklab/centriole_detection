@@ -146,7 +146,7 @@ if __name__ == "__main__":
         .save_to_directory(weight_dir) \
         .set_max_num_epochs(10000) \
         .build_logger(logger, log_directory=logs_dir) \
-        .register_callback(AutoLR(0.99, (30, 'epochs'), monitor_momentum=0.9,
+        .register_callback(AutoLR(0.99, (100, 'epochs'), monitor_momentum=0.95,
                            monitor_while='validating',
                            consider_improvement_with_respect_to='best'))
         # .register_callback(AutoLR(0.9, (1, 'epochs'),
