@@ -76,7 +76,7 @@ if __name__ == "__main__":
                                           transform=train_tr, inp_size=512, train=True, check=args.check)
     test_ds = CentriollesDatasetPatients(nums=train_folds[args.fold],
                                         # nums=test_folds[args.fold],
-                                         main_dir='../centrioles/dataset/new_edition/combined', train=False,
+                                         main_dir='../centrioles/dataset/new_edition/combined',
                                         # all_data=True,
                                          transform=test_tr, inp_size=512, train=False, check=args.check)
 
