@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     log_info('Params: ' + str(args))
-
+ 
     # train_folds = [[397, 402, 403, 406, 396, 3971, 4021, 3960, 406183],
     #                [4010, 402, 403, 406, 4090, 4021, 40311, 40318, 40918, 406180, 406183],
     #                [4010, 402, 403, 3971, 3960, 40311, 40318, 40918, 406180, 406183],
@@ -61,12 +61,12 @@ if __name__ == "__main__":
     train_folds = [[397, 402, 403, 406, 396, 3971, 4021, 3960, 406183],
                    [397, 402, 403, 406, 396, 3971, 4021, 3970, 4010],
                    [397, 402, 403, 406, 396, 3971, 4021, 4090, 40311],
-                   [397, 402, 403, 406, 396, 3971, 4021, 40318, 40918]]
+                   [397, 402, 403, 406, 396, 3971, 4021, 40918]]
 
-    test_folds = [[3970, 4010, 4090, 40311, 40318, 40918, 406180],
-                  [4090, 40311, 40318, 40918, 406180, 3960, 406183],
-                  [3970, 4010, 40318, 40918, 406180, 3960, 406183],
-                  [3970, 4010, 4090, 40311, 406180, 3960, 406183]]
+    test_folds = [[3970, 4010, 4090, 40311, 40918],
+                  [4090, 40311, 40918, 3960, 406183],
+                  [3970, 4010, 40918, 3960, 406183],
+                  [3970, 4010, 4090, 40311, 3960, 406183]]
 
     # Dataset
     train_tr, test_tr = get_basic_transforms()
@@ -76,7 +76,7 @@ if __name__ == "__main__":
                                           transform=train_tr, inp_size=512, train=True, check=args.check)
     test_ds = CentriollesDatasetPatients(nums=train_folds[args.fold],
                                         # nums=test_folds[args.fold],
-                                         main_dir='../centrioles/dataset/new_edition/combined',
+                                         main_dir='../centrioles/dataset/new_edition/combined', train=False,
                                         # all_data=True,
                                          transform=test_tr, inp_size=512, train=False, check=args.check)
 
@@ -146,11 +146,12 @@ if __name__ == "__main__":
         .save_to_directory(weight_dir) \
         .set_max_num_epochs(10000) \
         .build_logger(logger, log_directory=logs_dir) \
-        .register_callback(AutoLR(0.99, (100, 'epochs'), monitor_momentum=0.95,
-                           monitor_while='validating',
-                           consider_improvement_with_respect_to='best'))
-        # .register_callback(AutoLR(0.9, (1, 'epochs'),
-        #                    consider_improvement_with_respect_to='previous'))
+        .register_callback(AutoLR(0.9, (1, 'epochs'),
+                           consider_improvement_with_respect_to='previous'))
+        # .register_callback(AutoLR(0.99, (100, 'epochs'), monitor_momentum=0.95,
+        #                    monitor_while='validating',
+        #                    consider_improvement_with_respect_to='best'))
+        
 
 
     # Bind loaders
