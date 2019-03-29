@@ -9,7 +9,7 @@ TIME_LIMIT = 100
 ID         = 'default'
 MAIL_TYPE  = 'NONE'
 
-RUNNING_COMAND = './run_cross_weights.py'
+RUNNING_COMAND = './run_ilc_cross_weight.py'
 ADDITIONAL_MODULES = 'module load cuDNN'
 ARGUMENTS_FOR_RUN = ''
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
                         help='Name of the model from the list of implemented models')
     parser.add_argument('--time', type=int, default=TIME_LIMIT, dest='time',
                         help='Time limit for the script execution')
-    
+
 
     args, unknown = parser.parse_known_args()
 
@@ -58,8 +58,8 @@ if __name__ == "__main__":
 
     bash_script_text = slurm_script_template.format(args.id, args.model_name, PROJECT, GROUP_NAME, args.mem, args.time, 
                                                     parent_dir, parent_dir, MAIL_TYPE, EMAIL) + '\n' +\
-                        ADDITIONAL_MODULES + '\n' + RUNNING_COMAND + ' ' + kargs
-                                    
+                                                    ADDITIONAL_MODULES + '\n' + RUNNING_COMAND + ' ' + kargs
+
     with open('slurm_script.sh', 'w') as f:
         print(bash_script_text, file=f)
 

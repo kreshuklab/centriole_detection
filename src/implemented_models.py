@@ -1,4 +1,4 @@
-from src.architectures import View, DenseNet, CustomMIL, get_cnn, DenseMIL
+from src.architectures import View, DenseNet, CustomMIL, get_cnn, DenseMIL, FConvDenseNet
 from inferno.extensions.layers.convolutional import ConvELU2D
 from inferno.extensions.layers.reshape import Flatten
 
@@ -24,6 +24,7 @@ DenseNet_BN_32k_to7x7_mp_5fc = DenseNet(32, [6, 12, 32, 64, 48], [2880, 1440, 51
 
 # MAIN NETS FOR DNO MODEL #
 ICL_DenseNet_3fc = DenseNet(32, [6, 12, 32], [1280, 80, 16])
+ICL_FConvDenseNet_3fc = FConvDenseNet(32, [6, 12, 32], [1280, 80, 16])
 
 MIL_Representative_3 = DenseNet(32, [6, 12, 32, 1, 6, 12], [648], avg_pool_size=3)
 MIL_Representative_7 = DenseNet(32, [6, 12, 32, 1, 6], [528], avg_pool_size=7)

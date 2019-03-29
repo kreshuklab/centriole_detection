@@ -10,6 +10,7 @@ import os
 from PIL import Image
 import numpy as np
 from typing import List
+from collections import OrderedDict
 
 # TORCH IMPORTS
 import torch
@@ -322,6 +323,15 @@ class DenseNet(nn.Module):
         nChannels = 2*growthRate
         self.conv1 = nn.Conv2d(inp_channels, nChannels, kernel_size=3, padding=1, stride=2, bias=False)
 
+        # This change was made 5.03
+        # self.features = nn.Sequential(OrderedDict([
+        #             ('conv0', nn.Conv2d(inp_channels, nChannels, kernel_size=7, 
+        #                                 stride=2, padding=3, bias=False)),
+        #             ('norm0', nn.BatchNorm2d(nChannels)),
+        #             ('relu0', nn.ReLU(inplace=True)),
+        #             ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
+        #         ]))
+
         # DenseBlocks + TransitionLayers
         main_blocks = []
         for i, depth in enumerate(nLayers):
@@ -365,6 +375,81 @@ class DenseNet(nn.Module):
         # There was not anything about ReLu and BN in the original paper
         out = self.fc_part(out)
         out = self.clf(out)
+
+        if self.features_needed:
+            return out, features
+        else:
+            return out
+
+
+###############################################################################
+#                               NEW CLASS                                     #
+###############################################################################
+
+
+class FConvDenseNet(nn.Module):
+    '''
+    Implementation of FullyConvolutionalDenseNet.
+    '''
+    def __init__(self, growthRate: int, nLayers: List[int], nFc: List[int], reduction: float=0.5,
+                 nClasses: int=2, crosscon: bool=False, bottleneck: bool=True, max_pool: bool=False,
+                 inp_channels: int=1, features_needed: bool=False, drop_out_prob=None, avg_pool_size: int=3):
+        super(FConvDenseNet, self).__init__()
+        self.max_pool = max_pool
+        self.avg_pool_size = avg_pool_size
+        self.features_needed = features_needed
+
+        # First convolution layer
+        nChannels = 2*growthRate
+        self.conv1 = nn.Conv2d(inp_channels, nChannels, kernel_size=3, padding=1, stride=2, bias=False)
+
+        # This change was made 5.03
+        # self.features = nn.Sequential(OrderedDict([
+        #             ('conv0', nn.Conv2d(inp_channels, nChannels, kernel_size=7, 
+        #                                 stride=2, padding=3, bias=False)),
+        #             ('norm0', nn.BatchNorm2d(nChannels)),
+        #             ('relu0', nn.ReLU(inplace=True)),
+        #             ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
+        #         ]))
+
+        # DenseBlocks + TransitionLayers
+        main_blocks = []
+        for i, depth in enumerate(nLayers):
+            main_blocks.append(DenseBlock(nChannels, growthRate, depth, bottleneck))
+            nChannels += depth * growthRate
+            # Final Dense layer without transition
+            if i != len(nLayers) - 1:
+                main_blocks.append(TransitionLayer(nChannels, reduction))
+                nChannels = int(math.floor(nChannels*reduction))
+        self.main_blocks = nn.Sequential(*main_blocks)
+
+        # Classification part (FC after global pooling)
+        self.bn = nn.BatchNorm2d(nChannels)
+
+        fc_part = []
+        for i in range(len(nFc) - 1):
+            fc_part.append(nn.Conv2d(nFc[i], nFc[i+1], kernel_size=1))
+            fc_part.append(nn.ReLU())
+            if drop_out_prob is not None and drop_out_prob >= 0 and drop_out_prob <= 1:
+                fc_part.append(nn.Dropout(p=drop_out_prob))
+
+        self.fc_part = nn.Sequential(*fc_part)
+
+        self.clf = nn.Conv2d(nFc[-1], nClasses, kernel_size=1)
+
+    def forward(self, x):
+        out = F.max_pool2d(self.conv1(x), 3, stride=2)
+        out = self.main_blocks(out)
+
+        out = self.bn(out)
+        # it is a global pooling, so the resolution of the image after all previous blocks should be 7x7
+        # is it ok for our part to have an avg pooling in the end?
+        # or 7 if it is previous models
+        features = F.avg_pool2d(out, self.avg_pool_size)
+        out = features
+        out = self.fc_part(out)
+        out = self.clf(out)
+        out = F.max_pool2d(out, out.shape[2:]).view(out.shape[0], -1)
 
         if self.features_needed:
             return out, features
