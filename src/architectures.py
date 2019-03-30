@@ -450,7 +450,7 @@ class FConvDenseNet(nn.Module):
         out = self.fc_part(out)
         out = self.clf(out)
         features = out
-        out = F.max_pool2d(out, out.shape[2:]).view(out.shape[0], -1)
+        out = F.max_pool2d(out, out.shape[2:]).view(out.shape[0])
 
         if self.features_needed:
             return out, features

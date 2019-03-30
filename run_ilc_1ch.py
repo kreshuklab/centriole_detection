@@ -26,6 +26,7 @@ if __name__ == "__main__":
     parser.add_argument('--id', type=str, default='default', help='Unique net id to save')
     parser.add_argument('--img_size', type=int, default=60, help='Size of input images')
     parser.add_argument('--fold', type=int, default=0, help='Number of fold for train/test split')
+    parser.add_argument('--batch', type=int, default=32, help='Batch size')
 
     args = parser.parse_args()
     log_info('Params: ' + str(args))
@@ -52,8 +53,8 @@ if __name__ == "__main__":
                             main_dir='../centrioles/dataset/new_edition/combined',
                             transform=test_tr, inp_size=512, one=True, crop=True, stride=0.1)
 
-    train_dl = DataLoader(train_ds, batch_size=32, shuffle=True, num_workers=0)
-    test_dl = DataLoader(test_ds,  batch_size=32, shuffle=True, num_workers=0)
+    train_dl = DataLoader(train_ds, batch_size=args.batch, shuffle=True, num_workers=0)
+    test_dl = DataLoader(test_ds,  batch_size=args.batch, shuffle=True, num_workers=0)
 
     log_info('Datasets are initialized!')
 
