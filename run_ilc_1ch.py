@@ -84,7 +84,7 @@ if __name__ == "__main__":
     logger.log_histogram = log_histogram
 
     trainer = Trainer(model)\
-        .build_criterion('BCEWithLogitsLoss') \
+        .build_criterion('BCELoss') \
         .build_metric('CategoricalError') \
         .build_optimizer('Adam') \
         .validate_every((2, 'epochs')) \
