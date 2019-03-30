@@ -45,12 +45,10 @@ if __name__ == "__main__":
                   [4010, 402, 403, 406, 4090, 4021],
                   [40318, 40918, 406180, 406183, 4021]]
 
-    train_ds = GENdatasetILC(nums=train_folds[args.fold],
-                             main_dir='../centrioles/dataset/new_edition/combined',
+    train_ds = GENdatasetILC(main_dir='../centrioles/dataset/new_edition/in_png_normilized/',
                              transform=train_tr, inp_size=512, one=True, crop=True, stride=0.1)
 
-    test_ds = GENdatasetILC(nums=test_folds[args.fold],
-                            main_dir='../centrioles/dataset/new_edition/combined',
+    test_ds = GENdatasetILC(main_dir='../centrioles/dataset/new_edition/in_png_normilized/',
                             transform=test_tr, inp_size=512, one=True, crop=True, stride=0.1)
 
     train_dl = DataLoader(train_ds, batch_size=args.batch, shuffle=True, num_workers=0)
