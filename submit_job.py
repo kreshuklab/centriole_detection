@@ -9,7 +9,7 @@ TIME_LIMIT = 100
 ID         = 'default'
 MAIL_TYPE  = 'NONE'
 
-RUNNING_COMAND = './run_ilc_cross_weight.py'
+RUNNING_COMAND = './run_ilc_1ch.py'
 ADDITIONAL_MODULES = 'module load cuDNN'
 ARGUMENTS_FOR_RUN = ''
 
