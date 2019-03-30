@@ -434,7 +434,7 @@ class GENdatasetILC(Dataset):
             rx, ry = int(proj.shape[0] / 2), int(proj.shape[1] / 2)
             image = image[:, mx - rx:mx + rx, my - ry:my + ry]
             image = local_autoscale_ms(image)
-            return image.float(), label
+            return image.float(), torch.tensor(label, dtype=torch.float32)
 
         if np.random.randint(0, 2) == 0:
             pil_img = Image.fromarray(image[:, :, 0])
