@@ -117,7 +117,7 @@ if __name__ == "__main__":
         else:
             init_trainer = init_trainer.load(from_directory=args.init_model_path, best=True, map_location='cpu')
         init_model = init_trainer.model
-        init_weights(model, init_model, freeze_gradients=args.freeze)
+        init_weights(model, init_model, freeze_gradients=False)
 
 
     # Bind loaders
