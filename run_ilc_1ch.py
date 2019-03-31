@@ -27,9 +27,14 @@ if __name__ == "__main__":
     parser.add_argument('--img_size', type=int, default=60, help='Size of input images')
     parser.add_argument('--batch', type=int, default=32, help='Batch size')
 
-    parser.add_argument('--decey', type=float, default=0.96, help='lr decey')
     parser.add_argument('--rdv', action='store_true', help='Real data validation')
+    parser.add_argument('--rdt', action='store_true', help='Fixed adjustable learning rate')
+    parser.add_argument('--init_model_path', type=str, default='',
+                        help='Name of the model for initialization')
+
+
     parser.add_argument('--flr', action='store_true', help='Fixed adjustable learning rate')
+    parser.add_argument('--decey', type=float, default=0.96, help='lr decey')
 
 
     args = parser.parse_args()
@@ -37,11 +42,16 @@ if __name__ == "__main__":
 
     train_tr, test_tr = get_basic_transforms()
 
-    train_ds = GENdatasetILC(main_dir='../centrioles/dataset/new_edition/in_png_normilized/',
-                             transform=train_tr, inp_size=512, one=True, crop=True, stride=0.1)
+    if args.rdt:
+        test_ds = CentriollesDatasetPatients(nums=[397, 402, 403, 406, 396, 3971, 4021, 3960, 406183],
+                                             main_dir='../centrioles/dataset/new_edition/comsbined',
+                                             transform=train_tr, inp_size=512, train=True)
+    else:
+        train_ds = GENdatasetILC(main_dir='../centrioles/dataset/new_edition/in_png_normilized/',
+                                 transform=train_tr, inp_size=512, one=True, crop=True, stride=0.1)
 
-    if args.rdv:
-        test_ds = CentriollesDatasetPatients(nums=[397, 402, 403],
+    if args.rdv or args.rdt:
+        test_ds = CentriollesDatasetPatients(nums=[397, 402, 403, 406, 396, 3971, 4021, 3960, 406183],
                                              main_dir='../centrioles/dataset/new_edition/combined',
                                              transform=test_tr, inp_size=512, train=False)
     else:
@@ -78,19 +88,12 @@ if __name__ == "__main__":
         pass
     logger.log_histogram = log_histogram
 
-    if args.flr:
-        trainer = Trainer(model)\
-            .build_criterion('BCELoss') \
-            .build_metric('CategoricalError') \
-            .build_optimizer('Adam') \
-            .validate_every((2, 'epochs')) \
-            .save_every((5, 'epochs')) \
-            .save_to_directory(weight_dir) \
-            .set_max_num_epochs(10000) \
-            .build_logger(logger, log_directory=logs_dir) \
-            .register_callback(AutoLR(args.decey, (1, 'epochs'), monitor_momentum=0.9,
-                                monitor_while='validating',
-                                consider_improvement_with_respect_to='best'))
+    if args.init_model_path != '':
+        trainer = Trainer(model)
+        if torch.cuda.is_available():
+            trainer = trainer.load(from_directory=args.init_model_path, best=True)
+        else:
+            trainer = trainer.load(from_directory=args.init_model_path, best=True, map_location='cpu')
     else:
         trainer = Trainer(model)\
             .build_criterion('BCELoss') \
@@ -100,9 +103,15 @@ if __name__ == "__main__":
             .save_every((5, 'epochs')) \
             .save_to_directory(weight_dir) \
             .set_max_num_epochs(10000) \
-            .build_logger(logger, log_directory=logs_dir) \
-            .register_callback(AutoLR(0.9, (1, 'epochs'),
-	                           consider_improvement_with_respect_to='previous'))
+            .build_logger(logger, log_directory=logs_dir)
+
+    if args.flr:
+        trainer = trainer.register_callback(AutoLR(args.decey, (1, 'epochs'), monitor_momentum=0.9,
+                                            monitor_while='validating',
+                                            consider_improvement_with_respect_to='best'))
+    else:
+        trainer = trainer.register_callback(AutoLR(0.9, (1, 'epochs'),
+	                                        consider_improvement_with_respect_to='previous'))
 
 
     # Bind loaders
