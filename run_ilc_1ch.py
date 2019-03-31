@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     if args.rdt:
         test_ds = CentriollesDatasetPatients(nums=[397, 402, 403, 406, 396, 3971, 4021, 3960, 406183],
-                                             main_dir='../centrioles/dataset/new_edition/comsbined',
+                                             main_dir='../centrioles/dataset/new_edition/combined',
                                              transform=train_tr, inp_size=512, train=True)
     else:
         train_ds = GENdatasetILC(main_dir='../centrioles/dataset/new_edition/in_png_normilized/',
