@@ -149,8 +149,9 @@ class CentriollesDatasetPatients(Dataset):
 
     def __getitem__(self, idx):
         if self.transform:
-            return self.transform(self.samples[idx]).float(), self.classes[idx]
-        return self.samples[idx].float(), self.classes[idx]
+            return self.transform(self.samples[idx]).float(),\
+                   torch.tensor(self.classes[idx], dtype=torch.float32)
+        return self.samples[idx].float(), torch.tensor(self.classes[idx], dtype=torch.float32)
 
     def class_balance(self):
         return np.sum(self.classes) / len(self.classes)
