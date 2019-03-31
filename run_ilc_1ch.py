@@ -59,7 +59,7 @@ if __name__ == "__main__":
                                 transform=test_tr, inp_size=512, one=True, crop=True, stride=0.1)
 
     train_dl = DataLoader(train_ds, batch_size=args.batch, shuffle=True, num_workers=0)
-    test_dl = DataLoader(test_ds,  batch_size=16, shuffle=True, num_workers=0)
+    test_dl = DataLoader(test_ds,  batch_size=args.batch, shuffle=True, num_workers=0)
 
     log_info('Datasets are initialized!')
 
@@ -88,14 +88,16 @@ if __name__ == "__main__":
         pass
     logger.log_histogram = log_histogram
 
+
+    trainer = Trainer(model)
+
     if args.init_model_path != '':
-        trainer = Trainer(model)
         if torch.cuda.is_available():
             trainer = trainer.load(from_directory=args.init_model_path, best=True)
         else:
-            trainer = trainer.load(from_directory=args.init_model_path, best=True, map_location='cpu')
-    else:
-        trainer = Trainer(model)\
+            trainer = trainer.load(from_directory=args.init_model_path, best=True, map_location='cpu')        
+
+    trainer = trainer.\
             .build_criterion('BCELoss') \
             .build_metric('CategoricalError') \
             .build_optimizer('Adam') \
