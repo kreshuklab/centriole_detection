@@ -43,7 +43,7 @@ if __name__ == "__main__":
     train_tr, test_tr = get_basic_transforms()
 
     if args.rdt:
-        test_ds = CentriollesDatasetPatients(nums=[397, 402, 403, 406, 396, 3971, 4021, 3960, 406183],
+        train_ds = CentriollesDatasetPatients(nums=[397, 402, 403, 406, 396, 3971, 4021, 3960, 406183],
                                              main_dir='../centrioles/dataset/new_edition/combined',
                                              transform=train_tr, inp_size=512, train=True)
     else:
