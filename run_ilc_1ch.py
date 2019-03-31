@@ -10,6 +10,7 @@ import numpy as np
 # INTERNAL IMPORTS
 from src.datasets import GENdatasetILC, CentriollesDatasetPatients
 from src.utils import get_basic_transforms, log_info, get_resps_transforms
+from src.utils import init_weights
 import src.implemented_models as impl_models
 
 # INFERNO IMPORTS
@@ -35,6 +36,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--flr', action='store_true', help='Fixed adjustable learning rate')
     parser.add_argument('--decey', type=float, default=0.96, help='lr decey')
+    parser.add_argument('--lr', type=float, default=0.001, help='Adam learning rate')
 
 
     args = parser.parse_args()
@@ -89,18 +91,11 @@ if __name__ == "__main__":
     logger.log_histogram = log_histogram
 
 
-    trainer = Trainer(model)
-
-    if args.init_model_path != '':
-        if torch.cuda.is_available():
-            trainer = trainer.load(from_directory=args.init_model_path, best=True)
-        else:
-            trainer = trainer.load(from_directory=args.init_model_path, best=True, map_location='cpu')        
-
+    trainer = Trainer(model)     
     trainer = trainer\
             .build_criterion('BCELoss') \
             .build_metric('CategoricalError') \
-            .build_optimizer('Adam') \
+            .build_optimizer('Adam', lr=args.lr) \
             .validate_every((2, 'epochs')) \
             .save_every((5, 'epochs')) \
             .save_to_directory(weight_dir) \
@@ -114,6 +109,15 @@ if __name__ == "__main__":
     else:
         trainer = trainer.register_callback(AutoLR(0.9, (1, 'epochs'),
 	                                        consider_improvement_with_respect_to='previous'))
+
+    if args.init_model_path != '':
+        init_trainer = Trainer(model)
+        if torch.cuda.is_available():
+            init_trainer = init_trainer.load(from_directory=args.init_model_path, best=True)
+        else:
+            init_trainer = init_trainer.load(from_directory=args.init_model_path, best=True, map_location='cpu')
+        init_model = init_trainer.model
+        init_weights(model, init_model, freeze_gradients=args.freeze)
 
 
     # Bind loaders
