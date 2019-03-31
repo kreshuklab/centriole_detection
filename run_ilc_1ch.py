@@ -97,7 +97,7 @@ if __name__ == "__main__":
         else:
             trainer = trainer.load(from_directory=args.init_model_path, best=True, map_location='cpu')        
 
-    trainer = trainer.\
+    trainer = trainer\
             .build_criterion('BCELoss') \
             .build_metric('CategoricalError') \
             .build_optimizer('Adam') \
