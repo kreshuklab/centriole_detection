@@ -13,3 +13,7 @@ a centriole we constructan additional training set with patch-level labels.
 A two-level DenseNetis trained on the hybrid training data with synthetic patches and realimages, 
 achieving much better results on real patient data than trainingonly at the image-level.
 
+
+## Publication
+
+This work has been accepted to MICCAI 2019 and you can find a [preprint on arXiv](https://arxiv.org/abs/1908.10109).
