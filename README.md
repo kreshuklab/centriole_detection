@@ -13,6 +13,26 @@ a centriole we constructan additional training set with patch-level labels.
 A two-level DenseNetis trained on the hybrid training data with synthetic patches and realimages, 
 achieving much better results on real patient data than trainingonly at the image-level.
 
+## Reposirory structure
+There are 8 scripts in the root directory covering all our experiments.
+Each script has name "run_*.py" and starts the training process of a model.
+
+Implemented architectures for our experiments are stored in file [src/implemented_models.py](https://github.com/kreshuklab/centriole_detection/blob/master/src/implemented_models.py).
+To reproduce results described in our paper one should train 2 models: for patches and full-images.
+The most convenient way is to use the script [run_ilc_1ch.py](https://github.com/kreshuklab/centriole_detection/blob/master/run_ilc_1ch.py).
+
+For training patch lavel model:
+```bash
+run_ilc_1ch.py --model_name ICL_DenseNet_3fc
+```
+
+For training patch lavel model:
+```bash
+run_ilc_1ch.py --model_name MIL_DenseNet_3fc_bn --rdt --img_size 512 --init_model_path <path_to_patch_level_model>
+```
+Due to personal data security we can not make our dataset public.
+**Do not forget to change paths in the script for your data**.
+Currently, repository is not well organized, so in case something is unclear do not hesitate to contact [Artem Lukoyanov] (https://github.com/ottogin) and any help is welcome.
 
 ## Publication
 
