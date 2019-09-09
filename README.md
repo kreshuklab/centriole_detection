@@ -32,7 +32,7 @@ run_ilc_1ch.py --model_name MIL_DenseNet_3fc_bn --rdt --img_size 512 --init_mode
 ```
 Due to personal data security we can not make our dataset public.
 **Do not forget to change paths in the script for your data**.
-Currently, repository is not well organized, so in case something is unclear do not hesitate to contact [Artem Lukoyanov] (https://github.com/ottogin) and any help is welcome.
+Currently, repository is not well organized, so in case something is unclear do not hesitate to contact [Artem Lukoyanov](https://github.com/ottogin) and any help is welcome.
 
 ## Publication
 
