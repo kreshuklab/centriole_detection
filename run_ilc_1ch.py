@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch', type=int, default=32, help='Batch size')
 
     parser.add_argument('--rdv', action='store_true', help='Real data validation')
-    parser.add_argument('--rdt', action='store_true', help='Fixed adjustable learning rate')
+    parser.add_argument('--rdt', action='store_true', help='Real data training')
     parser.add_argument('--init_model_path', type=str, default='',
                         help='Name of the model for initialization')
 
